@@ -8,7 +8,7 @@ export default function CalculatorLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex h-screen bg-background">
+    <div className="flex bg-background">
       <Sidebar />
       <div className="flex flex-col flex-1">
         <div className="border-b p-4">
