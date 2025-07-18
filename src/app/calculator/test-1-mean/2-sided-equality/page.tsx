@@ -173,6 +173,19 @@ export default function Test1Mean2SidedEqualityPage() {
         updatePlotData();
     }, [xAxisVar, xAxisMin, xAxisMax]);
 
+    const handleParamsChange = (newParams: { [key: string]: any }) => {
+        setParams(prevParams => ({ ...prevParams, ...newParams }));
+    };
+
+    const inputFields = [
+        { name: 'alpha', label: 'Alpha (α)', type: 'number' as const },
+        { name: 'power', label: 'Power (1-β)', type: 'text' as const },
+        { name: 'sampleSize', label: 'Sample Size (n)', type: 'number' as const },
+        { name: 'mean', label: 'Mean (μ)', type: 'number' as const },
+        { name: 'nullHypothesisMean', label: 'Null Hypothesis Mean (μ₀)', type: 'number' as const },
+        { name: 'stdDev', label: 'Standard Deviation (σ)', type: 'number' as const },
+    ];
+
     return (
         <div className="space-y-8">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -184,11 +197,12 @@ export default function Test1Mean2SidedEqualityPage() {
                         <CardContent>
                             <CalculatorInputArea
                                 params={params}
-                                onParamsChange={setParams}
+                                onParamsChange={handleParamsChange}
                                 solveFor={solveFor}
                                 onSolveForChange={setSolveFor}
                                 onCalculate={handleCalculate}
                                 errors={errors}
+                                inputFields={inputFields}
                             />
                         </CardContent>
                     </Card>

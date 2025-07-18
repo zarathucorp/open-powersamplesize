@@ -49,6 +49,7 @@ type PlotSectionProps = {
   yAxisLabel?: string;
   yAxisVars: string[];
   lineColors: { [key: string]: string };
+  customXAxisOptions?: { value: string; label: string }[];
 };
 
 export function PlotSection({
@@ -62,6 +63,7 @@ export function PlotSection({
   yAxisLabel,
   yAxisVars,
   lineColors,
+  customXAxisOptions = [],
 }: PlotSectionProps) {
 
   const yAxisFormatter = yAxisLabel?.toLowerCase().includes('power') ? formatPower : formatInteger;
@@ -164,16 +166,19 @@ export function PlotSection({
               <Label>Variable</Label>
               <Select value={xAxisVar} onValueChange={onXAxisVarChange}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Select X-Axis" />
+                  <SelectValue placeholder="Select X-axis variable" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="mean">True Mean</SelectItem>
-                  <SelectItem value="nullHypothesisMean">Null Hypothesis Mean</SelectItem>
-                  <SelectItem value="stdDev">Standard Deviation</SelectItem>
+                  <SelectItem value="mean">True mean (μ)</SelectItem>
+                  <SelectItem value="nullHypothesisMean">Null Hypothesis mean (μ₀)</SelectItem>
+                  <SelectItem value="stdDev">Standard Deviation (σ)</SelectItem>
+                  {customXAxisOptions.map(option => (
+                    <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
-            <div>
+            <div className="flex-1">
               <Label>Min</Label>
               <Input
                 type="number"
@@ -182,7 +187,7 @@ export function PlotSection({
                 onBlur={() => onXAxisMinChange(localMin)}
               />
             </div>
-            <div>
+            <div className="flex-1">
               <Label>Max</Label>
               <Input
                 type="number"

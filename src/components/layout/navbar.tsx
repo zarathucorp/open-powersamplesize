@@ -1,47 +1,68 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import {
   NavigationMenu,
   NavigationMenuItem,
   NavigationMenuLink,
   NavigationMenuList,
-  navigationMenuTriggerStyle,
 } from "@/components/ui/navigation-menu";
+import { Info, Github, Linkedin, ExternalLink } from "lucide-react";
 
 export function Navbar() {
   return (
-    <header className="border-b p-4">
-      <nav className="container mx-auto flex items-center justify-between">
+    <header className="border-b p-4 dark bg-background text-foreground">
+      <div className="flex items-center justify-between">
+        <Link href="/calculator" className="flex items-center gap-4 font-bold">
+            <Image src="/logo.svg" alt="Home" width={32} height={32} />
+            Open SampleSize
+        </Link>
         <NavigationMenu>
           <NavigationMenuList>
             <NavigationMenuItem>
-              <Link href="/calculator" passHref legacyBehavior>
-                <NavigationMenuLink className={navigationMenuTriggerStyle()}>
-                  Home
-                </NavigationMenuLink>
-              </Link>
-            </NavigationMenuItem>
-            <NavigationMenuItem>
-              <Link href="/about" passHref legacyBehavior>
-                <NavigationMenuLink className={navigationMenuTriggerStyle()}>
+              <NavigationMenuLink
+                asChild
+              >
+                <Link href="/about" className="flex items-center">
+                  <Info className="w-4 h-4" />
                   About
-                </NavigationMenuLink>
-              </Link>
+                </Link>
+              </NavigationMenuLink>
             </NavigationMenuItem>
             <NavigationMenuItem>
               <NavigationMenuLink
-                href="https://github.com/zarathucorp/open-powersamplesize"
-                target="_blank"
-                rel="noopener noreferrer"
-                className={navigationMenuTriggerStyle()}
+                asChild
               >
-                GitHub
+                <Link href="https://openstat.ai/" target="_blank" rel="noopener noreferrer" className="flex items-center">
+                  Openstat.ai
+                  <ExternalLink className="w-4 h-4" />
+                </Link>
+              </NavigationMenuLink>
+            </NavigationMenuItem>
+            <NavigationMenuItem>
+              <NavigationMenuLink
+                asChild
+              >
+                <Link href="https://github.com/zarathucorp" target="_blank" rel="noopener noreferrer" className="flex items-center">
+                  <Github className="w-4 h-4" />
+                  {/* GitHub */}
+                </Link>
+              </NavigationMenuLink>
+            </NavigationMenuItem>
+            <NavigationMenuItem>
+              <NavigationMenuLink
+                asChild
+              >
+                <Link href="https://www.linkedin.com/company/zarathu" target="_blank" rel="noopener noreferrer" className="flex items-center">
+                  <Linkedin className="w-4 h-4" />
+                  {/* LinkedIn */}
+                </Link>
               </NavigationMenuLink>
             </NavigationMenuItem>
           </NavigationMenuList>
         </NavigationMenu>
-      </nav>
+      </div>
     </header>
   );
 }

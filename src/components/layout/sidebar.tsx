@@ -162,7 +162,7 @@ export function Sidebar() {
 										? "bg-accent text-accent-foreground"
 										: "text-muted-foreground hover:bg-accent/50"
 								)}
-                                legacyBehavior>
+								>
 								{link.name}
 							</Link>
 						))}
@@ -172,3 +172,4 @@ export function Sidebar() {
         </aside>
     );
 }
+

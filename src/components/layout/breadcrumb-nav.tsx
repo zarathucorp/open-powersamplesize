@@ -35,7 +35,7 @@ export function BreadcrumbNav() {
                   <BreadcrumbPage className="">{segment}</BreadcrumbPage>
                 ) : (
                   <BreadcrumbLink asChild>
-                    <Link href={href} className="" legacyBehavior>
+                    <Link href={href} className="" >
                       {segment}
                     </Link>
                   </BreadcrumbLink>
