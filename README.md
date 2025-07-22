@@ -1,36 +1,59 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Open Power Samplesize
+
+[![Deploy to GitHub Pages](https://github.com/koolerjaebee/open-powersamplesize/actions/workflows/deploy.yml/badge.svg)](https://github.com/koolerjaebee/open-powersamplesize/actions/workflows/deploy.yml)
+
+*Open Power Samplesize* is a free, open-source web application designed to help researchers and students perform power and sample size calculations for various statistical tests. Our goal is to provide an intuitive and accessible tool for study design.
+
+This tool supports a wide range of scenarios, including tests for means, proportions, time-to-event data, and more. This project is built with [Next.js](https://nextjs.org).
+
+[한국어 README](./README.ko.md)
 
 ## Getting Started
 
-First, run the development server:
+To run the development server in your local environment, follow these steps:
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+1.  Clone the repository.
+2.  Install the dependencies:
+    ```bash
+    npm install
+    ```
+3.  Run the development server:
+    ```bash
+    npm run dev
+    ```
+4.  Open [http://localhost:3000](http://localhost:3000) in your browser to see the result.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Deployment
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+This project is automatically deployed to GitHub Pages whenever a push is made to the `main` branch. The deployment workflow is defined in `.github/workflows/deploy.yml`.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+The site is currently available at:
+`https://<your-github-username>.github.io/open-powersamplesize/`
 
-## Learn More
+### Using a Custom Domain
 
-To learn more about Next.js, take a look at the following resources:
+To use a custom domain for the deployed site, follow these steps:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+1.  **Configure GitHub Repository Settings**:
+    *   Go to your repository's **Settings** > **Pages**.
+    *   In the "Custom domain" section, enter your purchased domain name (e.g., `www.your-domain.com`) and click **Save**.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+2.  **Configure DNS**:
+    *   Go to your domain registrar's website (e.g., GoDaddy, Namecheap).
+    *   Create a `CNAME` or `A` record to point your domain to GitHub as instructed on the GitHub Pages settings page.
 
-## Deploy on Vercel
+3.  **Modify Next.js Configuration**:
+    *   When using a custom domain, the `basePath` is no longer needed. Modify your `next.config.ts` file as follows:
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+    ```typescript
+    import type { NextConfig } from "next";
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+    const nextConfig: NextConfig = {
+      output: "export",
+    };
+
+    export default nextConfig;
+    ```
+
+4.  **Deploy Changes**:
+    *   Commit and push the modified `next.config.ts` file to the `main` branch. GitHub Actions will automatically rebuild and deploy the site with the new settings.
