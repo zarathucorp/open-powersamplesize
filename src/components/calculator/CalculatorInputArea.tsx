@@ -50,6 +50,14 @@ export function CalculatorInputArea({
     onParamsChange({ ...params, [id]: processedValue });
   };
 
+  const handleCopyToClipboard = (value: any) => {
+    if (value != null) {
+      navigator.clipboard.writeText(String(value));
+      // You can add a toast notification here to provide feedback.
+      // For example: alert('Copied!');
+    }
+  };
+
   return (
     <div className="space-y-4">
       <div>
@@ -88,14 +96,25 @@ export function CalculatorInputArea({
         return (
           <div key={field.name}>
             <Label htmlFor={field.name}>{field.label}</Label>
-            <Input 
-              id={field.name} 
-              type={field.type} 
-              value={params[field.name] ?? ''} 
-              onChange={handleChange} 
-              disabled={isDisabled} 
-              {...(isAlphaField && { step: "0.01", min: "0", max: "1" })}
-            />
+            <div
+              onClick={() => {
+                if (isDisabled) {
+                  handleCopyToClipboard(params[field.name]);
+                }
+              }}
+              className={isDisabled ? "cursor-pointer" : ""}
+              title={isDisabled ? "Click to copy" : ""}
+            >
+              <Input
+                id={field.name}
+                type={field.type}
+                value={params[field.name] ?? ''}
+                onChange={handleChange}
+                disabled={isDisabled}
+                className={isDisabled ? "font-bold bg-[#e2e1f5] disabled:opacity-75 pointer-events-none" : ""}
+                {...(isAlphaField && { step: "0.01", min: "0", max: "1" })}
+              />
+            </div>
             {errors[field.name] && <p className="text-red-500 text-sm mt-1">{errors[field.name]}</p>}
           {/* after alpha field, add a divider */}
           {isAlphaField && <hr className="my-4" />}

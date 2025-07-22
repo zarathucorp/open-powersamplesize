@@ -178,8 +178,8 @@ export default function Test1Mean2SidedEqualityPage() {
     };
 
     const inputFields = [
-        { name: 'power', label: 'Power (1-β)', type: 'text' as const },
-        { name: 'sampleSize', label: 'Sample Size (n)', type: 'number' as const },
+        { name: 'power', label: 'Power (1-β)', type: 'text' as const, solve: 'power' as const },
+        { name: 'sampleSize', label: 'Sample Size (n)', type: 'number' as const, solve: 'sampleSize' as const },
         { name: 'alpha', label: 'Alpha (α)', type: 'number' as const },
         { name: 'mean', label: 'Mean (μ)', type: 'number' as const },
         { name: 'nullHypothesisMean', label: 'Null Hypothesis Mean (μ₀)', type: 'number' as const },

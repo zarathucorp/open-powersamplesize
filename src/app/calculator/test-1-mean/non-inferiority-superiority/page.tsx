@@ -34,8 +34,8 @@ export default function Test1MeanNonInferioritySuperiorityPage() {
     });
     const [plotData, setPlotData] = useState<any[]>([]);
     const [xAxisVar, setXAxisVar] = useState<string>("mean");
-    const [xAxisMin, setXAxisMin] = useState<number>(1.6);
-    const [xAxisMax, setXAxisMax] = useState<number>(2.4);
+    const [xAxisMin, setXAxisMin] = useState<number>(0);
+    const [xAxisMax, setXAxisMax] = useState<number>(0);
     const [yAxisVars, setYAxisVars] = useState<string[]>([]);
     const [lineColors, setLineColors] = useState<{ [key: string]: string }>({});
     const [errors, setErrors] = useState<ValidationErrors>({});
@@ -185,8 +185,8 @@ export default function Test1MeanNonInferioritySuperiorityPage() {
     };
 
     const inputFields = [
-        { name: 'power', label: 'Power (1-β)', type: 'text' as const },
-        { name: 'sampleSize', label: 'Sample Size (n)', type: 'number' as const },
+        { name: 'power', label: 'Power (1-β)', type: 'text' as const, solveFor: 'power' as const },
+        { name: 'sampleSize', label: 'Sample Size (n)', type: 'number' as const, solve: 'sampleSize' as const },
         { name: 'alpha', label: 'Alpha (α)', type: 'number' as const },
         { name: 'mean', label: 'True mean (μ)', type: 'number' as const },
         { name: 'nullHypothesisMean', label: 'Null Hypothesis mean (μ₀)', type: 'number' as const },
@@ -243,15 +243,15 @@ export default function Test1MeanNonInferioritySuperiorityPage() {
             <div>
                 <DescriptionSection
                     title="Calculate Sample Size Needed to Test 1 Mean: 1-Sample Non-Inferiority or Superiority"
-                    summary={`This calculator is useful for the types of tests known as non-inferiority and superiority tests. Whether the null hypothesis represents 'non-inferiority' or 'superiority' depends on the context and whether the non-inferiority/superiority margin, $δ$, is positive or negative. In this setting, we wish to test whether a mean, $μ$, is non-inferior/superior to a reference value, $μ₀$. The idea is that statistically significant differences between the mean and the reference value may not be of interest unless the difference is greater than a threshold, $δ$. This is particularly popular in clinical studies, where the margin is chosen based on clinical judgement and subject-domain knowledge. The hypotheses to test are 
-                        $H_0: μ - μ₀ \\le δ$ 
-                        and
-                         $H_1: μ - μ₀ > δ$
-                         , and $δ$ is the superiority or non-inferiority margin.`}
+                    summary={`This calculator is useful for the types of tests known as non-inferiority and superiority tests. Whether the null hypothesis represents 'non-inferiority' or 'superiority' depends on the context and whether the non-inferiority/superiority margin, $\\delta$, is positive or negative. In this setting, we wish to test whether a mean, $\\mu$, is non-inferior/superior to a reference value, $\\mu_0$. The idea is that statistically significant differences between the mean and the reference value may not be of interest unless the difference is greater than a threshold, $\\delta$. This is particularly popular in clinical studies, where the margin is chosen based on clinical judgement and subject-domain knowledge. The hypotheses to test are
+
+$H_0: \\mu - \\mu_0 \\le \\delta$
+$H_1: \\mu - \\mu_0 > \\delta$
+
+and $\\delta$ is the superiority or non-inferiority margin.`}
                     formulas={`This calculator uses the following formulas to compute sample size and power, respectively:
 
 $n=\\left(\\sigma\\frac{z_{1-\\alpha}+z_{1-\\beta}}{\\mu-\\mu_0-\\delta}\\right)^2$
-
 $1-\\beta= \\Phi\\left(z-z_{1-\\alpha}\\right)+\\Phi\\left(-z-z_{1-\\alpha}\\right) \\quad ,\\quad z=\\frac{\\mu-\\mu_0-\\delta}{\\sigma/\\sqrt{n}}$
 
 where:
@@ -262,16 +262,16 @@ $\\Phi^{-1}$ is the standard Normal quantile function
 $\\alpha$ is Type I error
 $\\beta$ is Type II error, meaning $1-\\beta$ is power
 $\\delta$ is the testing margin`}
-                    rCode={`mu = 2
-mu0 = 1.5
-sd = 1
-alpha = 0.05
-beta = 0.20
-delta = -0.5
-n = (sd * (qnorm(1-alpha) + qnorm(1-beta)) / (mu-mu0-delta))^2
-ceiling(n) # 7
-z = (mu-mu0-delta)/sd*sqrt(n)
-(Power = pnorm(z-qnorm(1-alpha)) + pnorm(-z-qnorm(1-alpha))) # 0.8416`}
+                    rCode={`mu=2
+mu0=1.5
+delta=-0.5
+sd=1
+alpha=0.05
+beta=0.20
+(n=(sd*(qnorm(1-alpha)+qnorm(1-beta))/(mu-mu0-delta))^2)
+ceiling(n)# 7
+z=(mu-mu0-delta)/sd*sqrt(n)
+(Power=pnorm(z-qnorm(1-alpha))+pnorm(-z-qnorm(1-alpha)))`}
                     references={[
                         "Chow S, Shao J, Wang H. 2008. Sample Size Calculations in Clinical Research. 2nd Ed. Chapman & Hall/CRC Biostatistics Series. page 52."
                     ]}

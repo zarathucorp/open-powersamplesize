@@ -9,7 +9,7 @@ const menuItems = [
 		title: "Documentation",
 		items: [
 			{ name: "Introduction", href: "/docs/introduction" },
-			{ name: "Usage", href: "/docs/usage" },
+			{ name: "How to use", href: "/docs/howto" },
 			{ name: "References", href: "/docs/references" },
 			{ name: "Validations", href: "/docs/validations" },
 		],

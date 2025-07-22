@@ -24,11 +24,11 @@ export default function Test1Mean1SidedPage() {
     const [solveFor, setSolveFor] = useState<string>("sampleSize");
     const [params, setParams] = useState<CalcParams>({
         power: "0.8000",
-        sampleSize: 26,
+        sampleSize: 143,
         alpha: 0.05,
-        mean: 2,
-        nullHypothesisMean: 1.5,
-        stdDev: 1,
+        mean: 115,
+        nullHypothesisMean: 120,
+        stdDev: 24,
     });
     const [plotData, setPlotData] = useState<any[]>([]);
     const [xAxisVar, setXAxisVar] = useState<string>("mean");
@@ -178,8 +178,8 @@ export default function Test1Mean1SidedPage() {
     };
 
     const inputFields = [
-        { name: 'power', label: 'Power (1-β)', type: 'text' as const },
-        { name: 'sampleSize', label: 'Sample Size (n)', type: 'number' as const },
+        { name: 'power', label: 'Power (1-β)', type: 'text' as const, solve: 'power' as const },
+        { name: 'sampleSize', label: 'Sample Size (n)', type: 'number' as const, solve: 'sampleSize' as const },
         { name: 'alpha', label: 'Alpha (α)', type: 'number' as const },
         { name: 'mean', label: 'Mean (μ)', type: 'number' as const },
         { name: 'nullHypothesisMean', label: 'Null Hypothesis Mean (μ₀)', type: 'number' as const },
@@ -244,12 +244,12 @@ $H_0: \\mu = \\mu_0 \\\\ H_1: \\mu > \\mu_0$
 $n = \\left( \\sigma\\frac{z_{1-\\alpha} + z_{1-\\beta}}{\\mu - \\mu_0} \\right)^2$
 $1-\\beta = \\Phi\\left( \\frac{|\\mu - \\mu_0|}{\\sigma / \\sqrt{n}} - z_{1-\\alpha} \\right)$
 where:
-- $n$ is sample size
-- $\\sigma$ is standard deviation
-- $\\Phi$ is the standard Normal distribution function
-- $\\Phi^{-1}$ is the standard Normal quantile function
-- $\\alpha$ is Type I error
-- $\\beta$ is Type II error, meaning $1-\\beta$ is power`}
+$n$ is sample size
+$\\sigma$ is standard deviation
+$\\Phi$ is the standard Normal distribution function
+$\\Phi^{-1}$ is the standard Normal quantile function
+$\\alpha$ is Type I error
+$\\beta$ is Type II error, meaning $1-\\beta$ is power`}
                     rCode={`mu=115
 mu0=120
 sd=24

@@ -50,6 +50,8 @@ type PlotSectionProps = {
   yAxisVars: string[];
   lineColors: { [key: string]: string };
   xAxisOptions: { value: string; label: string }[];
+  isInteractive?: boolean;
+  showControls?: boolean;
 };
 
 export function PlotSection({
@@ -63,7 +65,9 @@ export function PlotSection({
   yAxisLabel,
   yAxisVars,
   lineColors,
-  xAxisOptions
+  xAxisOptions,
+  isInteractive = true,
+  showControls = true,
 }: PlotSectionProps) {
 
   const yAxisFormatter = yAxisLabel?.toLowerCase().includes('power') ? formatPower : formatInteger;
@@ -109,93 +113,95 @@ export function PlotSection({
   };
 
   return (
-    <div className="space-y-4">
-      <Card>
-        <CardHeader>
-          <CardTitle>Plot</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div style={{ width: '100%', height: 400 }}>
-            <ResponsiveContainer>
-              <LineChart
-                data={filteredData}
-                margin={{
-                  top: 5,
-                  right: 30,
-                  left: 30,
-                  bottom: 5,
-                }}
-              >
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey={xAxisVar} type="number" domain={[zoomedDomain.min, zoomedDomain.max]} allowDataOverflow tickCount={11} tickFormatter={formatNumber} />
-                <YAxis label={yAxisLabel ? { value: yAxisLabel, angle: -90, position: 'insideLeft' } : undefined} tickFormatter={yAxisFormatter} />
-                <Tooltip 
-                  formatter={(value) => yAxisFormatter(value)} 
-                  labelFormatter={(label) => formatNumber(label)}
-                  itemSorter={(item) => yAxisVars.indexOf(item.dataKey as string)}
-                />
-                <Legend content={renderLegend} />
-                {yAxisVars.map((yVar, i) => (
-                  <Line key={yVar} type="monotone" dataKey={yVar} stroke={lineColors[yVar] || '#8884d8'} activeDot={{ r: 8 }} dot={false} />
+    <div>
+      <ResponsiveContainer width="100%" height={400}>
+        <LineChart
+          data={filteredData}
+          margin={{
+            top: 0,
+            right: 0,
+            left: 0,
+            bottom: 0,
+          }}
+        >
+          <CartesianGrid strokeDasharray="3 3" />
+          <XAxis
+            dataKey={xAxisVar}
+            type="number"
+            domain={[zoomedDomain.min, zoomedDomain.max]}
+            tickFormatter={formatNumber}
+            // label={{ value: xAxisOptions.find(opt => opt.value === xAxisVar)?.label, position: 'insideBottom', offset: -10 }}
+            allowDataOverflow
+          />
+          <YAxis
+            label={{ value: yAxisLabel, angle: -90, position: 'insideLeft' }}
+            tickFormatter={yAxisFormatter}
+          />
+          <Tooltip formatter={yAxisFormatter} labelFormatter={formatNumber} />
+          <Legend content={renderLegend} verticalAlign="top" wrapperStyle={{ paddingBottom: '20px' }} />
+          {yAxisVars.map((yVar, index) => (
+            <Line
+              key={index}
+              type="monotone"
+              dataKey={yVar}
+              stroke={lineColors[yVar]}
+              dot={false}
+              strokeWidth={2}
+              connectNulls
+            />
+          ))}
+          {isInteractive && plotData.length > 0 && (
+            <Brush
+              dataKey={xAxisVar}
+              height={30}
+              stroke="#8884d8"
+              startIndex={0}
+              endIndex={plotData.length - 1}
+              tickFormatter={formatNumber}
+              onChange={(e: any) => {
+                if (e.startIndex !== null && e.endIndex !== null && plotData[e.startIndex] && plotData[e.endIndex]) {
+                  setZoomedDomain({ min: plotData[e.startIndex][xAxisVar], max: plotData[e.endIndex][xAxisVar] });
+                }
+              }}
+            />
+          )}
+        </LineChart>
+      </ResponsiveContainer>
+      {showControls && (
+        <div className="flex items-center justify-center space-x-4 mt-4">
+          <div>
+            <Label htmlFor="x-axis-var">X-Axis Variable</Label>
+            <Select value={xAxisVar} onValueChange={onXAxisVarChange}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select X-axis variable" />
+              </SelectTrigger>
+              <SelectContent>
+                {xAxisOptions.map(option => (
+                  <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
                 ))}
-                <Brush
-                  dataKey={xAxisVar}
-                  stroke="#8884d8"
-                  onChange={handleBrushChange}
-                  tickFormatter={formatNumber}
-                >
-                  {/* <LineChart>
-                    <YAxis hide tickFormatter={yAxisFormatter} />
-                    {yAxisVars.map((yVar, i) => (
-                      <Line key={yVar} type="monotone" dataKey={yVar} stroke={lineColors[yVar] || '#8884d8'} dot={false} />
-                    ))}
-                  </LineChart> */}
-                </Brush>
-              </LineChart>
-            </ResponsiveContainer>
+              </SelectContent>
+            </Select>
           </div>
-        </CardContent>
-      </Card>
-      <Card>
-        <CardHeader>
-          <CardTitle>X-Axis</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-3 gap-4">
-            <div>
-              <Label>Variable</Label>
-              <Select value={xAxisVar} onValueChange={onXAxisVarChange}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select X-axis variable" />
-                </SelectTrigger>
-                <SelectContent>
-                  {xAxisOptions.map(option => (
-                      <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="flex-1">
-              <Label>Min</Label>
-              <Input
-                type="number"
-                value={localMin}
-                onChange={(e) => setLocalMin(Number(e.target.value))}
-                onBlur={() => onXAxisMinChange(localMin)}
-              />
-            </div>
-            <div className="flex-1">
-              <Label>Max</Label>
-              <Input
-                type="number"
-                value={localMax}
-                onChange={(e) => setLocalMax(Number(e.target.value))}
-                onBlur={() => onXAxisMaxChange(localMax)}
-              />
-            </div>
+          <div className="flex-1">
+            <Label>Min</Label>
+            <Input
+              type="number"
+              value={localMin}
+              onChange={(e) => setLocalMin(Number(e.target.value))}
+              onBlur={() => onXAxisMinChange(localMin)}
+            />
           </div>
-        </CardContent>
-      </Card>
+          <div className="flex-1">
+            <Label>Max</Label>
+            <Input
+              type="number"
+              value={localMax}
+              onChange={(e) => setLocalMax(Number(e.target.value))}
+              onBlur={() => onXAxisMaxChange(localMax)}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

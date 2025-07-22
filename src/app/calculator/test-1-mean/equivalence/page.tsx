@@ -179,8 +179,8 @@ export default function Test1MeanEquivalencePage() {
     };
 
     const inputFields = [
-        { name: 'power', label: 'Power (1-β)', type: 'text' as const },
-        { name: 'sampleSize', label: 'Sample Size (n)', type: 'number' as const },
+        { name: 'power', label: 'Power (1-β)', type: 'text' as const, solve: 'power' as const },
+        { name: 'sampleSize', label: 'Sample Size (n)', type: 'number' as const, solve: 'sampleSize' as const },
         { name: 'alpha', label: 'Alpha (α)', type: 'number' as const },
         { name: 'mean', label: 'True mean (μ)', type: 'number' as const },
         { name: 'nullHypothesisMean', label: 'Null Hypothesis mean (μ₀)', type: 'number' as const },
@@ -254,24 +254,17 @@ $\\Phi^{-1}$ is the standard Normal quantile function
 $\\alpha$ is Type I error
 $\\beta$ is Type II error, meaning $1-\\beta$ is power
 $\\delta$ is the testing margin`}
-                    rCode={`# Parameters
-mu <- 2
-mu0 <- 2
-delta <- 0.05
-sd <- 0.10
-alpha <- 0.05
-power <- 0.80
-beta <- 1 - power
-
-# Calculate sample size
-n <- (sd * (qnorm(1 - alpha) + qnorm(1 - beta / 2)) / (delta - abs(mu - mu0)))^2
-ceiling(n) # 35
-
-# Calculate power for a given sample size
-n_val <- 35
-z <- (abs(mu - mu0) - delta) / sd * sqrt(n_val)
-calculated_power <- 2 * (pnorm(z - qnorm(1 - alpha)) + pnorm(-z - qnorm(1 - alpha))) - 1
-calculated_power # ~0.80`}
+                    rCode={`muA=5
+muB=4
+delta=5
+kappa=1
+sd=10
+alpha=0.05
+beta=0.20
+(nB=(1+1/kappa)*(sd*(qnorm(1-alpha)+qnorm(1-beta/2))/(abs(muA-muB)-delta))^2)
+ceiling(nB) # 108
+z=(abs(muA-muB)-delta)/(sd*sqrt((1+1/kappa)/nB))
+(Power=2*(pnorm(z-qnorm(1-alpha))+pnorm(-z-qnorm(1-alpha)))-1)`}
                     references={[
                         "Chow S, Shao J, Wang H. 2008. Sample Size Calculations in Clinical Research. 2nd Ed. Chapman & Hall/CRC Biostatistics Series. page 54."
                     ]}

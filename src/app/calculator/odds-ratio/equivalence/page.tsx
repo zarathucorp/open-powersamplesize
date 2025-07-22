@@ -302,7 +302,7 @@ where $\\delta$ is the superiority or non-inferiority margin and the ratio betwe
 $\\kappa=\\frac{n_A}{n_B}$`}
                     formulas={`This calculator uses the following formulas to compute sample size and power, respectively:
 $n_A=\\kappa n_B \\;\\text{ and }\\; n_B=\\left(\\frac{1}{\\kappa p_A(1-p_A)}+\\frac{1}{p_B(1-pB)}\\right) \\left(\\frac{z_{1-\\alpha}+z_{1-\\beta/2}}{\\delta-|\\ln(OR)|}\\right)^2$
-$1-\\beta= 2(\\Phi(z-\\Phi^{-1}(1-\\alpha))+\\Phi(-z-\\Phi^{-1}(1-\\alpha)))-1\\quad ,\\quad z=\\frac{(|\\ln(OR)|-\\delta)\\sqrt{n_B}}{\\sqrt{\\frac{1}{\\kappa p_A(1-p_A)}+\\frac{1}{p_B(1-p_B)}}}$
+$1-\\beta= 2(\\Phi(z-z_{1-\\alpha})+\\Phi(-z-z_{1-\\alpha}))-1\\quad ,\\quad z=\\frac{(|\\ln(OR)|-\\delta)\\sqrt{n_B}}{\\sqrt{\\frac{1}{\\kappa p_A(1-p_A)}+\\frac{1}{p_B(1-p_B)}}}$
 where
 $OR=\\frac{p_A(1-p_B)}{p_B(1-p_A)}$
 and where

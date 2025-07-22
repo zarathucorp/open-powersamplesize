@@ -23,9 +23,9 @@ export function Navbar() {
               <NavigationMenuLink
                 asChild
               >
-                <Link href="/about" className="flex items-center">
-                  <Info className="w-4 h-4" />
-                  About
+                <Link href="https://zarathu.com" target="_blank" rel="noopener noreferrer"  className="flex items-center">
+                  Zarathu
+                  <Image src="/logo.svg" alt="Home" width={24} height={24} />
                 </Link>
               </NavigationMenuLink>
             </NavigationMenuItem>
@@ -36,15 +36,6 @@ export function Navbar() {
                 <Link href="https://openstat.ai/" target="_blank" rel="noopener noreferrer" className="flex items-center">
                   Openstat.ai
                   <ExternalLink className="w-4 h-4" />
-                </Link>
-              </NavigationMenuLink>
-            </NavigationMenuItem>
-            <NavigationMenuItem>
-              <NavigationMenuLink
-                asChild
-              >
-                <Link href="https://zarathu.com/" target="_blank" rel="noopener noreferrer" className="flex items-center">
-                  <Image src="/logo.svg" alt="Home" width={24} height={24} />
                 </Link>
               </NavigationMenuLink>
             </NavigationMenuItem>
