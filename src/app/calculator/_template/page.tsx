@@ -31,7 +31,7 @@ export default function CalculatorPageTemplate() {
         // 여기에 다른 파라미터의 초기값을 설정하세요.
     });
     const [plotData, setPlotData] = useState<any[]>([]);
-    const [xAxisVar, setXAxisVar] = useState<string>("delta"); // TODO: 가장 처음 나오는 값을 기본 x축 변수로 설정하세요.
+    const [xAxisVar, setXAxisVar] = useState<string>(""); // TODO: 가장 처음 나오는 값을 기본 x축 변수로 설정하세요.
     const [xAxisMin, setXAxisMin] = useState<number>(0); // 고정
     const [xAxisMax, setXAxisMax] = useState<number>(0); // 고정
     const [yAxisVars, setYAxisVars] = useState<string[]>([]);
@@ -40,7 +40,7 @@ export default function CalculatorPageTemplate() {
 
     useEffect(() => {
         // TODO: 파라미터에 따라 x축 범위를 설정하는 로직을 적당히 조정하세요.
-        // const { stdDev, delta } = params; // 예시 파라미터
+        // const { stdDev, delta } = params; // 예시 파라미터, 이 항목이 없을 수 있음
         // if (xAxisVar === 'stdDev') {
         //     setXAxisMin(Math.max(0.1, stdDev * 0.5));
         //     setXAxisMax(stdDev * 1.5);

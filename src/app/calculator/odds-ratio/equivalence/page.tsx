@@ -32,7 +32,7 @@ export default function OddsRatioEquivalenceCalculator() {
     const [solveFor, setSolveFor] = useState<string>("sampleSize");
     // 초기 파라미터 값을 설정하세요.
     const [params, setParams] = useState<CalcParams>({
-        power: "0.80",
+        power: "0.8000",
         sampleSize: 366,
         alpha: 0.05,
         pA: 0.25,
@@ -187,8 +187,8 @@ export default function OddsRatioEquivalenceCalculator() {
                 
                 const z_alpha = jStat.normal.inv(1 - alpha, 0, 1);
                 
-                const calculatedPower = jStat.normal.cdf(z - z_alpha, 0, 1) + 
-                                      jStat.normal.cdf(-z - z_alpha, 0, 1);
+                const calculatedPower = 2 * (jStat.normal.cdf(z - z_alpha, 0, 1) + 
+                                      jStat.normal.cdf(-z - z_alpha, 0, 1)) - 1;
 
                 const formattedPower = calculatedPower.toFixed(4);
                 if (params.power !== formattedPower) {
@@ -290,10 +290,6 @@ export default function OddsRatioEquivalenceCalculator() {
             </div>
 
             <div>
-                {/* BUG: Power 계산이 잘못되었습니다. */}
-                <div style={{ color: "red", marginBottom: "1rem" }}>
-                    Power calculation is not working correctly. Please check the implementation.
-                </div>
                 {/* TODO: 설명, 수식, R 코드, 참고 문헌을 업데이트하세요. */}
                 <DescriptionSection
                     title="Calculate Sample Size Needed to Test Odds Ratio: Equivalence"
@@ -305,8 +301,8 @@ $H_1:|\\ln(OR)|<\\delta$
 where $\\delta$ is the superiority or non-inferiority margin and the ratio between the sample sizes of the two groups is
 $\\kappa=\\frac{n_A}{n_B}$`}
                     formulas={`This calculator uses the following formulas to compute sample size and power, respectively:
-$n_A=\\kappa n_B \\;\\text{ and }\\; n_B=\\left(\\frac{1}{\\kappa p_A(1-p_A)}+\\frac{1}{p_B(1-pB)}\\right) \\left(\\frac{z_{1-\\alpha}+z_{1-\\beta/2}}{|\\ln(OR)|-\\delta}\\right)^2$
-$1-\\beta= \\Phi\\left(z-z_{1-\\alpha}\\right)+\\Phi\\left(-z-z_{1-\\alpha}\\right) \\quad ,\\quad z=\\frac{(|\\ln(OR)|-\\delta)\\sqrt{n_B}}{\\sqrt{\\frac{1}{\\kappa p_A(1-p_A)}+\\frac{1}{p_B(1-p_B)}}}$
+$n_A=\\kappa n_B \\;\\text{ and }\\; n_B=\\left(\\frac{1}{\\kappa p_A(1-p_A)}+\\frac{1}{p_B(1-pB)}\\right) \\left(\\frac{z_{1-\\alpha}+z_{1-\\beta/2}}{\\delta-|\\ln(OR)|}\\right)^2$
+$1-\\beta= 2(\\Phi(z-\\Phi^{-1}(1-\\alpha))+\\Phi(-z-\\Phi^{-1}(1-\\alpha)))-1\\quad ,\\quad z=\\frac{(|\\ln(OR)|-\\delta)\\sqrt{n_B}}{\\sqrt{\\frac{1}{\\kappa p_A(1-p_A)}+\\frac{1}{p_B(1-p_B)}}}$
 where
 $OR=\\frac{p_A(1-p_B)}{p_B(1-p_A)}$
 and where
@@ -327,7 +323,7 @@ beta=0.20
 (nB=(1/(kappa*pA*(1-pA))+1/(pB*(1-pB)))*((qnorm(1-alpha)+qnorm(1-beta/2))/(delta-abs(log(OR))))^2)
 ceiling(nB) # 366
 z=(abs(log(OR))-delta)*sqrt(nB)/sqrt(1/(kappa*pA*(1-pA))+1/(pB*(1-pB)))
-(Power=pnorm(z-qnorm(1-alpha))+pnorm(-z-qnorm(1-alpha)))`}
+(Power=2*(pnorm(z-qnorm(1-alpha))+pnorm(-z-qnorm(1-alpha)))-1)`}
                     references={[
                         "Chow S, Shao J, Wang H. 2008. Sample Size Calculations in Clinical Research. 2nd Ed. Chapman & Hall/CRC Biostatistics Series. page 107."
                     ]}
