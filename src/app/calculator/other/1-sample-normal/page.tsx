@@ -7,54 +7,58 @@ import { PlotSection } from "@/components/calculator/PlotSection";
 import { DescriptionSection } from "@/components/calculator/DescriptionSection";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
+// TODO: 계산기에 필요한 파라미터를 정의하세요.
 type CalcParams = {
     alpha: number;
     power: string | null;
     sampleSize: number | null;
-    mean: number;
-    nullHypothesisMean: number;
-    delta: number;
     stdDev: number;
+    mean: number;
+    mean0: number;
 };
 
 type ValidationErrors = {
     power?: string;
-}
+    stdDev?: string;
+    mean?: string;
+    mean0?: string;
+};
 
-export default function Test1MeanNonInferioritySuperiorityPage() {
+// TODO: 계산기 페이지에 맞게 컴포넌트 이름을 변경하세요.
+export default function OneSampleNormalPage() {
     const [solveFor, setSolveFor] = useState<string>("sampleSize");
+    // TODO: 초기 파라미터 값을 설정하세요.
     const [params, setParams] = useState<CalcParams>({
-        power: "0.8000",
-        sampleSize: 7,
+        power: "0.8000", // 고정
+        sampleSize: 32,
         alpha: 0.05,
-        mean: 2,
-        nullHypothesisMean: 1.5,
-        delta: -0.5,
         stdDev: 1,
+        mean: 2,
+        mean0: 1.5,
     });
     const [plotData, setPlotData] = useState<any[]>([]);
-    const [xAxisVar, setXAxisVar] = useState<string>("mean");
-    const [xAxisMin, setXAxisMin] = useState<number>(1.6);
-    const [xAxisMax, setXAxisMax] = useState<number>(2.4);
+    const [xAxisVar, setXAxisVar] = useState<string>("mean"); // TODO: 가장 처음 나오는 값을 기본 x축 변수로 설정하세요.
+    const [xAxisMin, setXAxisMin] = useState<number>(0); // 고정
+    const [xAxisMax, setXAxisMax] = useState<number>(0); // 고정
     const [yAxisVars, setYAxisVars] = useState<string[]>([]);
     const [lineColors, setLineColors] = useState<{ [key: string]: string }>({});
     const [errors, setErrors] = useState<ValidationErrors>({});
 
     useEffect(() => {
-        if (xAxisVar === 'mean') {
-            setXAxisMin(1.8);
-            setXAxisMax(2.2);
-        } else if (xAxisVar === 'nullHypothesisMean') {
-            setXAxisMin(1.35);
-            setXAxisMax(1.65);
-        } else if (xAxisVar === 'stdDev') {
-            setXAxisMin(0.9);
-            setXAxisMax(1.1);
-        } else if (xAxisVar === 'delta') {
-            setXAxisMin(-0.7);
-            setXAxisMax(-0.3);
+        const { stdDev, mean, mean0 } = params;
+        if (xAxisVar === 'stdDev') {
+            setXAxisMin(Math.max(0.1, stdDev * 0.5));
+            setXAxisMax(stdDev * 1.5);
+        } else if (xAxisVar === 'mean') {
+            const range = Math.abs(mean * 0.5) || 1;
+            setXAxisMin(mean - range);
+            setXAxisMax(mean + range);
+        } else if (xAxisVar === 'mean0') {
+            const range = Math.abs(mean0 * 0.5) || 1;
+            setXAxisMin(mean0 - range);
+            setXAxisMax(mean0 + range);
         }
-    }, [xAxisVar]);
+    }, [xAxisVar, params.stdDev, params.mean, params.mean0]);
 
     const validate = () => {
         const newErrors: ValidationErrors = {};
@@ -64,22 +68,20 @@ export default function Test1MeanNonInferioritySuperiorityPage() {
                 newErrors.power = "Power must be between 0 and 1.";
             }
         }
+        if (params.stdDev <= 0) {
+            newErrors.stdDev = "Standard Deviation must be > 0.";
+        }
+        if (params.mean === params.mean0) {
+            newErrors.mean = "Mean and Reference Mean must not be equal.";
+            newErrors.mean0 = "Mean and Reference Mean must not be equal.";
+        }
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
-    }
+    };
 
     const updatePlotData = () => {
-        const { alpha, power, mean, nullHypothesisMean, delta, stdDev } = params;
-        const mu = mean;
-        const mu0 = nullHypothesisMean;
-        const sd = stdDev;
+        const { alpha, power } = params;
         const data = [];
-        const effectSize = mu - mu0 - delta;
-
-        if (solveFor === 'power' && effectSize === 0) {
-            setPlotData([]);
-            return;
-        }
 
         const powerValue = power ? parseFloat(power) : null;
         const powerScenarios: { name: string, value: number }[] = [];
@@ -92,11 +94,14 @@ export default function Test1MeanNonInferioritySuperiorityPage() {
         }
 
         [0.9, 0.7].forEach(val => {
-            if (!powerScenarios.some(s => s.value === val)) {
+            if (powerScenarios.length < 3 && !powerScenarios.some(s => s.value === val)) {
                 powerScenarios.push({ name: `${(val * 100).toFixed(2)}%`, value: val });
             }
         });
 
+        // sort 하지 말 것
+
+        // Calculate으로 생성된 power는 항상 #8884d8 색상을 사용합니다.
         powerScenarios.forEach((scenario, i) => {
             newColors[scenario.name] = colors[i % colors.length];
         });
@@ -104,38 +109,36 @@ export default function Test1MeanNonInferioritySuperiorityPage() {
         setYAxisVars(powerScenarios.map(s => s.name));
         setLineColors(newColors);
 
+        const z_alpha_half = jStat.normal.inv(1 - alpha / 2, 0, 1);
+
         for (let i = 0; i < 100; i++) {
             const x = xAxisMin + (xAxisMax - xAxisMin) * (i / 99);
             let point: any = { [xAxisVar]: x };
             
             powerScenarios.forEach(scenario => {
-                const z_alpha = jStat.normal.inv(1 - alpha, 0, 1);
+                let sampleSize: number | null = null;
                 const z_beta = jStat.normal.inv(scenario.value, 0, 1);
-                let requiredN: number | null = null;
-                let denominator: number;
 
-                if (xAxisVar === 'mean') {
-                    denominator = x - mu0 - delta;
-                    if (denominator !== 0) {
-                        requiredN = Math.ceil(Math.pow((sd * (z_alpha + z_beta)) / denominator, 2));
-                    }
-                } else if (xAxisVar === 'nullHypothesisMean') {
-                    denominator = mu - x - delta;
-                    if (denominator !== 0) {
-                        requiredN = Math.ceil(Math.pow((sd * (z_alpha + z_beta)) / denominator, 2));
-                    }
-                } else if (xAxisVar === 'stdDev') {
-                    denominator = mu - mu0 - delta;
-                    if (x > 0 && denominator !== 0) {
-                        requiredN = Math.ceil(Math.pow((x * (z_alpha + z_beta)) / denominator, 2));
-                    }
-                } else if (xAxisVar === 'delta') {
-                    denominator = mu - mu0 - x;
-                    if (denominator !== 0) {
-                        requiredN = Math.ceil(Math.pow((sd * (z_alpha + z_beta)) / denominator, 2));
-                    }
+                let currentStdDev = params.stdDev;
+                let currentMean = params.mean;
+                let currentMean0 = params.mean0;
+
+                if (xAxisVar === 'stdDev') {
+                    currentStdDev = x;
+                } else if (xAxisVar === 'mean') {
+                    currentMean = x;
+                } else if (xAxisVar === 'mean0') {
+                    currentMean0 = x;
                 }
-                point[scenario.name] = (requiredN && requiredN > 0) ? requiredN : null;
+
+                if (currentStdDev > 0 && currentMean !== currentMean0) {
+                    const delta = currentMean - currentMean0;
+                    const numerator = currentStdDev * (z_alpha_half + z_beta);
+                    const calculatedN = Math.pow(numerator / delta, 2);
+                    sampleSize = Math.ceil(calculatedN);
+                }
+                
+                point[scenario.name] = sampleSize && sampleSize > 0 ? sampleSize : null;
             });
             data.push(point);
         }
@@ -145,16 +148,14 @@ export default function Test1MeanNonInferioritySuperiorityPage() {
     const handleCalculate = () => {
         if (!validate()) return;
 
-        const { alpha, power, sampleSize, mean, nullHypothesisMean, delta, stdDev } = params;
-        const mu = mean;
-        const mu0 = nullHypothesisMean;
-        const sd = stdDev;
-
+        const { alpha, power, sampleSize, stdDev, mean, mean0 } = params;
+        
         if (solveFor === 'power') {
             if (sampleSize && sampleSize > 0) {
-                const z = (mu - mu0 - delta) / sd * Math.sqrt(sampleSize);
-                const z_alpha = jStat.normal.inv(1 - alpha, 0, 1);
-                const calculatedPower = jStat.normal.cdf(z - z_alpha, 0, 1) + jStat.normal.cdf(-z - z_alpha, 0, 1);
+                const z_alpha_half = jStat.normal.inv(1 - alpha / 2, 0, 1);
+                const delta = mean - mean0;
+                const term = (Math.abs(delta) / (stdDev / Math.sqrt(sampleSize)));
+                const calculatedPower = jStat.normal.cdf(term - z_alpha_half, 0, 1) + jStat.normal.cdf(-term - z_alpha_half, 0, 1);
                 const formattedPower = calculatedPower.toFixed(4);
                 if (params.power !== formattedPower) {
                     setParams(p => ({ ...p, power: formattedPower }));
@@ -162,12 +163,16 @@ export default function Test1MeanNonInferioritySuperiorityPage() {
             } else {
                 setParams(p => ({...p, power: null}));
             }
-        } else {
+        } else { // solveFor === 'sampleSize'
             const powerValue = power ? parseFloat(power) : null;
-            if (powerValue && powerValue > 0 && powerValue < 1 && (mu - mu0 - delta) !== 0) {
-                const n = Math.ceil(Math.pow((sd * (jStat.normal.inv(1 - alpha, 0, 1) + jStat.normal.inv(powerValue, 0, 1))) / (mu - mu0 - delta), 2));
-                if (params.sampleSize !== n) {
-                    setParams(p => ({ ...p, sampleSize: n }));
+            if (powerValue && powerValue > 0 && powerValue < 1) {
+                const z_alpha_half = jStat.normal.inv(1 - alpha / 2, 0, 1);
+                const z_beta = jStat.normal.inv(powerValue, 0, 1);
+                const delta = mean - mean0;
+                const numerator = stdDev * (z_alpha_half + z_beta);
+                const calculatedSize = Math.pow(numerator / delta, 2);
+                if (params.sampleSize !== calculatedSize) {
+                    setParams(p => ({ ...p, sampleSize: Math.ceil(calculatedSize) }));
                 }
             } else {
                 setParams(p => ({...p, sampleSize: null}));
@@ -176,6 +181,7 @@ export default function Test1MeanNonInferioritySuperiorityPage() {
         updatePlotData();
     };
 
+    // 바꾸지 말 것
     useEffect(() => {
         updatePlotData();
     }, [xAxisVar, xAxisMin, xAxisMax]);
@@ -184,18 +190,19 @@ export default function Test1MeanNonInferioritySuperiorityPage() {
         setParams(prevParams => ({ ...prevParams, ...newParams }));
     };
 
+    // TODO: 계산기의 입력 필드를 정의하세요.
     const inputFields = [
-        { name: 'power', label: 'Power (1-β)', type: 'text' as const },
-        { name: 'sampleSize', label: 'Sample Size (n)', type: 'number' as const },
+        // 필수 입력 필드
+        { name: 'power', label: 'Power (1-β)', type: 'text' as const, solve: 'power' as const },
+        { name: 'sampleSize', label: 'Sample Size (n)', type: 'number' as const, solve: 'sampleSize' as const },
         { name: 'alpha', label: 'Alpha (α)', type: 'number' as const },
-        { name: 'mean', label: 'True mean (μ)', type: 'number' as const },
-        { name: 'nullHypothesisMean', label: 'Null Hypothesis mean (μ₀)', type: 'number' as const },
-        { name: 'delta', label: 'Non-inferiority or Superiority Margin (δ)', type: 'number' as const },
+        { name: 'mean', label: 'Mean (μ)', type: 'number' as const },
+        { name: 'mean0', label: 'Reference Mean (μ0)', type: 'number' as const },
         { name: 'stdDev', label: 'Standard Deviation (σ)', type: 'number' as const },
     ];
 
     const xAxisOptions = inputFields
-        .filter(field => !['alpha', 'power', 'sampleSize'].includes(field.name))
+        .filter(field => !['alpha', 'power', 'sampleSize'].includes(field.name)) // 제외할 필드 고정, 바꾸지 마세요.
         .map(field => ({ value: field.name, label: field.label }));
 
     return (
@@ -230,7 +237,7 @@ export default function Test1MeanNonInferioritySuperiorityPage() {
                                 onXAxisMinChange={setXAxisMin}
                                 xAxisMax={xAxisMax}
                                 onXAxisMaxChange={setXAxisMax}
-                                yAxisLabel="Sample Size"
+                                yAxisLabel="Sample Size (n)" // TODO: Y축 레이블을 조정하세요.
                                 yAxisVars={yAxisVars}
                                 lineColors={lineColors}
                                 xAxisOptions={xAxisOptions}
@@ -241,39 +248,38 @@ export default function Test1MeanNonInferioritySuperiorityPage() {
             </div>
 
             <div>
+                {/* TODO: 설명, 수식, R 코드, 참고 문헌을 업데이트하세요. */}
                 <DescriptionSection
-                    title="Calculate Sample Size Needed to Test 1 Mean: 1-Sample Non-Inferiority or Superiority"
-                    summary={`This calculator is useful for the types of tests known as non-inferiority and superiority tests. Whether the null hypothesis represents 'non-inferiority' or 'superiority' depends on the context and whether the non-inferiority/superiority margin, $δ$, is positive or negative. In this setting, we wish to test whether a mean, $μ$, is non-inferior/superior to a reference value, $μ₀$. The idea is that statistically significant differences between the mean and the reference value may not be of interest unless the difference is greater than a threshold, $δ$. This is particularly popular in clinical studies, where the margin is chosen based on clinical judgement and subject-domain knowledge. The hypotheses to test are 
-                        $H_0: μ - μ₀ \\le δ$ 
-                        and
-                         $H_1: μ - μ₀ > δ$
-                         , and $δ$ is the superiority or non-inferiority margin.`}
+                    title="Calculate Sample Size Needed to Other: 1-Sample Normal"
+                    summary={`This calculator is useful for tests concerning whether a mean, $\\mu$, is equal to a reference value, $\\mu_0$. The Null and Alternative hypotheses are
+
+$H_0:\\mu=\\mu_0$
+$H_1:\\mu\\neq\\mu_0$`}
                     formulas={`This calculator uses the following formulas to compute sample size and power, respectively:
+                      
+$n=\\left(\\sigma\\frac{z_{1-\\alpha/2}+z_{1-\\beta}}{\\mu-\\mu_0}\\right)^2$
+$1-\\beta=\\Phi\\left(\\frac{\\mu-\\mu_0}{\\sigma/\\sqrt{n}}-z_{1-\\alpha/2}\\right)+\\Phi\\left(-\\frac{\\mu-\\mu_0}{\\sigma/\\sqrt{n}}-z_{1-\\alpha/2}\\right)$
 
-$n=\\left(\\sigma\\frac{z_{1-\\alpha}+z_{1-\\beta}}{\\mu-\\mu_0-\\delta}\\right)^2$
+where
 
-$1-\\beta= \\Phi\\left(z-z_{1-\\alpha}\\right)+\\Phi\\left(-z-z_{1-\\alpha}\\right) \\quad ,\\quad z=\\frac{\\mu-\\mu_0-\\delta}{\\sigma/\\sqrt{n}}$
-
-where:
 $n$ is sample size
 $\\sigma$ is standard deviation
 $\\Phi$ is the standard Normal distribution function
 $\\Phi^{-1}$ is the standard Normal quantile function
 $\\alpha$ is Type I error
-$\\beta$ is Type II error, meaning $1-\\beta$ is power
-$\\delta$ is the testing margin`}
-                    rCode={`mu = 2
-mu0 = 1.5
-sd = 1
-alpha = 0.05
-beta = 0.20
-delta = -0.5
-n = (sd * (qnorm(1-alpha) + qnorm(1-beta)) / (mu-mu0-delta))^2
-ceiling(n) # 7
-z = (mu-mu0-delta)/sd*sqrt(n)
-(Power = pnorm(z-qnorm(1-alpha)) + pnorm(-z-qnorm(1-alpha))) # 0.8416`}
+$\\beta$ is Type II error, meaning $1-\\beta$ is power`}
+                    rCode={`mu=2
+mu0=1.5
+sd=1
+alpha=0.05
+beta=0.20
+(n=(sd*(qnorm(1-alpha/2)+qnorm(1-beta))/(mu-mu0))^2)
+ceiling(n)# 32
+z=(mu-mu0)/sd*sqrt(n)
+(Power=pnorm(z-qnorm(1-alpha/2))+pnorm(-z-qnorm(1-alpha/2)))`}
                     references={[
-                        "Chow S, Shao J, Wang H. 2008. Sample Size Calculations in Clinical Research. 2nd Ed. Chapman & Hall/CRC Biostatistics Series. page 52."
+                        "Chow S, Shao J, Wang H. 2008. Sample Size Calculations in Clinical Research. 2nd Ed. Chapman & Hall/CRC Biostatistics Series. page 51.",
+                        "Rosner B. 2010. Fundamentals of Biostatistics. 7th Ed. Brooks/Cole. page 232."
                     ]}
                 />
             </div>

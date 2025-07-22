@@ -15,8 +15,7 @@ export function Navbar() {
     <header className="border-b p-4 dark bg-background text-foreground">
       <div className="flex items-center justify-between">
         <Link href="/calculator" className="flex items-center gap-4 font-bold">
-            <Image src="/logo.svg" alt="Home" width={32} height={32} />
-            Open SampleSize
+          Open Power Samplesize
         </Link>
         <NavigationMenu>
           <NavigationMenuList>
@@ -37,6 +36,15 @@ export function Navbar() {
                 <Link href="https://openstat.ai/" target="_blank" rel="noopener noreferrer" className="flex items-center">
                   Openstat.ai
                   <ExternalLink className="w-4 h-4" />
+                </Link>
+              </NavigationMenuLink>
+            </NavigationMenuItem>
+            <NavigationMenuItem>
+              <NavigationMenuLink
+                asChild
+              >
+                <Link href="https://zarathu.com/" target="_blank" rel="noopener noreferrer" className="flex items-center">
+                  <Image src="/logo.svg" alt="Home" width={24} height={24} />
                 </Link>
               </NavigationMenuLink>
             </NavigationMenuItem>

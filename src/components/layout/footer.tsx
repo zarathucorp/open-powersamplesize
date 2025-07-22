@@ -10,8 +10,9 @@ export function Footer() {
           target="_blank"
           className="underline"
         >
-          Zarathu Corporation
+          Zarathu Co., Ltd.
         </Link>
+        {" "}All rights reserved.
       </p>
     </footer>
   );

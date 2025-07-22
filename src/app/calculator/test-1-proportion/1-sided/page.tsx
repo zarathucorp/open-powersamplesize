@@ -11,27 +11,27 @@ type CalcParams = {
     alpha: number;
     power: string | null;
     sampleSize: number | null;
-    mean: number;
-    nullHypothesisMean: number;
-    stdDev: number;
+    p: number;
+    p0: number;
 };
 
 type ValidationErrors = {
     power?: string;
-}
+    p?: string;
+    p0?: string;
+};
 
-export default function Test1Mean1SidedPage() {
+export default function Test1Proportion1Sided() {
     const [solveFor, setSolveFor] = useState<string>("sampleSize");
     const [params, setParams] = useState<CalcParams>({
         power: "0.8000",
-        sampleSize: 26,
+        sampleSize: 191,
         alpha: 0.05,
-        mean: 2,
-        nullHypothesisMean: 1.5,
-        stdDev: 1,
+        p: 0.05,
+        p0: 0.02,
     });
     const [plotData, setPlotData] = useState<any[]>([]);
-    const [xAxisVar, setXAxisVar] = useState<string>("mean");
+    const [xAxisVar, setXAxisVar] = useState<string>("p");
     const [xAxisMin, setXAxisMin] = useState<number>(0);
     const [xAxisMax, setXAxisMax] = useState<number>(0);
     const [yAxisVars, setYAxisVars] = useState<string[]>([]);
@@ -39,17 +39,15 @@ export default function Test1Mean1SidedPage() {
     const [errors, setErrors] = useState<ValidationErrors>({});
 
     useEffect(() => {
-        if (xAxisVar === 'mean') {
-            setXAxisMin(Math.max(0.1, params.mean - 2));
-            setXAxisMax(params.mean + 2);
-        } else if (xAxisVar === 'nullHypothesisMean') {
-            setXAxisMin(Math.max(0.1, params.nullHypothesisMean - 2));
-            setXAxisMax(params.nullHypothesisMean + 2);
-        } else if (xAxisVar === 'stdDev') {
-            setXAxisMin(Math.max(0.1, params.stdDev * 0.5));
-            setXAxisMax(params.stdDev * 1.5);
+        const { p, p0 } = params;
+        if (xAxisVar === 'p') {
+            setXAxisMin(Math.max(0.01, p * 0.5));
+            setXAxisMax(Math.min(0.99, p * 1.5));
+        } else if (xAxisVar === 'p0') {
+            setXAxisMin(Math.max(0.01, p0 * 0.5));
+            setXAxisMax(Math.min(0.99, p0 * 1.5));
         }
-    }, [xAxisVar]);
+    }, [xAxisVar, params.p, params.p0]);
 
     const validate = () => {
         const newErrors: ValidationErrors = {};
@@ -59,22 +57,24 @@ export default function Test1Mean1SidedPage() {
                 newErrors.power = "Power must be between 0 and 1.";
             }
         }
+        if (params.p <= 0 || params.p >= 1) {
+            newErrors.p = "Proportion (p) must be between 0 and 1.";
+        }
+        if (params.p0 <= 0 || params.p0 >= 1) {
+            newErrors.p0 = "Comparison Proportion (p0) must be between 0 and 1.";
+        }
+        if (params.p === params.p0) {
+            const errorMessage = "Proportion (p) and Comparison Proportion (p0) cannot be equal.";
+            newErrors.p = errorMessage;
+            newErrors.p0 = errorMessage;
+        }
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
-    }
+    };
 
     const updatePlotData = () => {
-        const { alpha, power, mean, nullHypothesisMean, stdDev } = params;
-        const mu = mean;
-        const mu0 = nullHypothesisMean;
-        const sd = stdDev;
+        const { alpha, power, p, p0 } = params;
         const data = [];
-        const effectSize = mu - mu0;
-
-        if (solveFor === 'power' && effectSize === 0) {
-            setPlotData([]);
-            return;
-        }
 
         const powerValue = power ? parseFloat(power) : null;
         const powerScenarios: { name: string, value: number }[] = [];
@@ -87,7 +87,7 @@ export default function Test1Mean1SidedPage() {
         }
 
         [0.9, 0.7].forEach(val => {
-            if (!powerScenarios.some(s => s.value === val)) {
+            if (powerScenarios.length < 3 && !powerScenarios.some(s => s.value === val)) {
                 powerScenarios.push({ name: `${(val * 100).toFixed(2)}%`, value: val });
             }
         });
@@ -99,38 +99,34 @@ export default function Test1Mean1SidedPage() {
         setYAxisVars(powerScenarios.map(s => s.name));
         setLineColors(newColors);
 
+        const z_alpha = jStat.normal.inv(1 - alpha, 0, 1);
+
         for (let i = 0; i < 100; i++) {
             const x = xAxisMin + (xAxisMax - xAxisMin) * (i / 99);
             let point: any = { [xAxisVar]: x };
             
-            if (xAxisVar === 'mean') {
-                powerScenarios.forEach(scenario => {
-                    if (x !== mu0) {
-                        const requiredN = Math.ceil(Math.pow((sd * (jStat.normal.inv(1 - alpha, 0, 1) + jStat.normal.inv(scenario.value, 0, 1))) / Math.abs(x - mu0), 2));
-                        point[scenario.name] = requiredN > 0 ? requiredN : null;
-                    } else {
-                        point[scenario.name] = null;
-                    }
-                });
-            } else if (xAxisVar === 'nullHypothesisMean') {
-                powerScenarios.forEach(scenario => {
-                    if (mu !== x) {
-                        const requiredN = Math.ceil(Math.pow((sd * (jStat.normal.inv(1 - alpha, 0, 1) + jStat.normal.inv(scenario.value, 0, 1))) / Math.abs(mu - x), 2));
-                        point[scenario.name] = requiredN > 0 ? requiredN : null;
-                    } else {
-                        point[scenario.name] = null;
-                    }
-                });
-            } else if (xAxisVar === 'stdDev') {
-                powerScenarios.forEach(scenario => {
-                    if (x > 0 && effectSize !== 0) {
-                        const requiredN = Math.ceil(Math.pow((x * (jStat.normal.inv(1 - alpha, 0, 1) + jStat.normal.inv(scenario.value, 0, 1))) / Math.abs(mu - mu0), 2));
-                        point[scenario.name] = requiredN > 0 ? requiredN : null;
-                    } else {
-                        point[scenario.name] = null;
-                    }
-                });
-            }
+            powerScenarios.forEach(scenario => {
+                let sampleSize: number | null = null;
+                
+                let currentP = p;
+                let currentP0 = p0;
+
+                if (xAxisVar === 'p') {
+                    currentP = x;
+                } else if (xAxisVar === 'p0') {
+                    currentP0 = x;
+                }
+                
+                if (currentP > 0 && currentP < 1 && currentP0 > 0 && currentP0 < 1 && currentP !== currentP0) {
+                    const z_beta = jStat.normal.inv(scenario.value, 0, 1);
+                    const numerator = z_alpha + z_beta * Math.sqrt(currentP * (1 - currentP) / (currentP0 * (1 - currentP0)));
+                    const denominator = currentP - currentP0;
+                    const calculatedN = currentP0 * (1 - currentP0) * Math.pow(numerator / denominator, 2);
+                    sampleSize = Math.ceil(calculatedN);
+                }
+                
+                point[scenario.name] = sampleSize && sampleSize > 0 ? sampleSize : null;
+            });
             data.push(point);
         }
         setPlotData(data);
@@ -139,15 +135,14 @@ export default function Test1Mean1SidedPage() {
     const handleCalculate = () => {
         if (!validate()) return;
 
-        const { alpha, power, sampleSize, mean, nullHypothesisMean, stdDev } = params;
-        const mu = mean;
-        const mu0 = nullHypothesisMean;
-        const sd = stdDev;
-
+        const { alpha, power, sampleSize, p, p0 } = params;
+        
         if (solveFor === 'power') {
-            if (sampleSize && sampleSize > 0) {
-                const z = Math.abs(mu - mu0) / sd * Math.sqrt(sampleSize);
-                const calculatedPower = jStat.normal.cdf(z - jStat.normal.inv(1 - alpha, 0, 1), 0, 1);
+            if (sampleSize && sampleSize > 0 && p > 0 && p < 1 && p0 > 0 && p0 < 1 && p !== p0) {
+                const z_alpha = jStat.normal.inv(1 - alpha, 0, 1);
+                const term1 = Math.sqrt((p0 * (1 - p0)) / (p * (1 - p)));
+                const term2 = (Math.abs(p - p0) * Math.sqrt(sampleSize)) / Math.sqrt(p0 * (1 - p0));
+                const calculatedPower = jStat.normal.cdf(term1 * (term2 - z_alpha), 0, 1);
                 const formattedPower = calculatedPower.toFixed(4);
                 if (params.power !== formattedPower) {
                     setParams(p => ({ ...p, power: formattedPower }));
@@ -155,12 +150,16 @@ export default function Test1Mean1SidedPage() {
             } else {
                 setParams(p => ({...p, power: null}));
             }
-        } else {
+        } else { // solveFor === 'sampleSize'
             const powerValue = power ? parseFloat(power) : null;
-            if (powerValue && powerValue > 0 && powerValue < 1 && mu !== mu0) {
-                const n = Math.ceil(Math.pow((sd * (jStat.normal.inv(1 - alpha, 0, 1) + jStat.normal.inv(powerValue, 0, 1))) / (mu - mu0), 2));
-                if (params.sampleSize !== n) {
-                    setParams(p => ({ ...p, sampleSize: n }));
+            if (powerValue && powerValue > 0 && powerValue < 1 && p > 0 && p < 1 && p0 > 0 && p0 < 1 && p !== p0) {
+                const z_alpha = jStat.normal.inv(1 - alpha, 0, 1);
+                const z_beta = jStat.normal.inv(powerValue, 0, 1);
+                const numerator = z_alpha + z_beta * Math.sqrt(p * (1 - p) / (p0 * (1 - p0)));
+                const denominator = p - p0;
+                const calculatedSize = p0 * (1 - p0) * Math.pow(numerator / denominator, 2);
+                if (params.sampleSize !== calculatedSize) {
+                    setParams(p => ({ ...p, sampleSize: Math.ceil(calculatedSize) }));
                 }
             } else {
                 setParams(p => ({...p, sampleSize: null}));
@@ -178,12 +177,11 @@ export default function Test1Mean1SidedPage() {
     };
 
     const inputFields = [
-        { name: 'power', label: 'Power (1-β)', type: 'text' as const },
-        { name: 'sampleSize', label: 'Sample Size (n)', type: 'number' as const },
+        { name: 'power', label: 'Power (1-β)', type: 'text' as const, solve: 'power' },
+        { name: 'sampleSize', label: 'Sample Size (n)', type: 'number' as const, solve: 'sampleSize' },
         { name: 'alpha', label: 'Alpha (α)', type: 'number' as const },
-        { name: 'mean', label: 'Mean (μ)', type: 'number' as const },
-        { name: 'nullHypothesisMean', label: 'Null Hypothesis Mean (μ₀)', type: 'number' as const },
-        { name: 'stdDev', label: 'Standard Deviation (σ)', type: 'number' as const },
+        { name: 'p', label: 'Proportion (p)', type: 'number' as const },
+        { name: 'p0', label: 'Comparison Proportion (p0)', type: 'number' as const },
     ];
 
     const xAxisOptions = inputFields
@@ -222,7 +220,7 @@ export default function Test1Mean1SidedPage() {
                                 onXAxisMinChange={setXAxisMin}
                                 xAxisMax={xAxisMax}
                                 onXAxisMaxChange={setXAxisMax}
-                                yAxisLabel="Sample Size"
+                                yAxisLabel="Sample Size (n)"
                                 yAxisVars={yAxisVars}
                                 lineColors={lineColors}
                                 xAxisOptions={xAxisOptions}
@@ -233,34 +231,38 @@ export default function Test1Mean1SidedPage() {
             </div>
 
             <div>
+                {/* TODO: 설명, 수식, R 코드, 참고 문헌을 업데이트하세요. */}
                 <DescriptionSection
-                    title="Calculate Sample Size Needed to Test 1 Mean: 1-Sample, 1-Sided"
-                    summary={`This calculator is useful for tests concerning whether a mean, $\\mu$, is equal to a reference value, $\\mu_0$. The Null and Alternative hypotheses are either:
-$H_0: \\mu = \\mu_0 \\\\ H_1: \\mu < \\mu_0$
+                    title="Calculate Sample Size Needed to Test 1 Proportion: 1-Sample, 1-Sided"
+                    summary={`This calculator is useful for tests concerning whether a proportion, $p$, is equal to a reference value, $p_0$. The Null and Alternative hypotheses are
+
+$H_0:p=p_0$
+$H_1:p\\lt p_0$
+
 or
-$H_0: \\mu = \\mu_0 \\\\ H_1: \\mu > \\mu_0$
+$H_0:p=p_0$
+$H_1:p\\gt p_0$
 `}
                     formulas={`This calculator uses the following formulas to compute sample size and power, respectively:
-$n = \\left( \\sigma\\frac{z_{1-\\alpha} + z_{1-\\beta}}{\\mu - \\mu_0} \\right)^2$
-$1-\\beta = \\Phi\\left( \\frac{|\\mu - \\mu_0|}{\\sigma / \\sqrt{n}} - z_{1-\\alpha} \\right)$
-where:
-- $n$ is sample size
-- $\\sigma$ is standard deviation
-- $\\Phi$ is the standard Normal distribution function
-- $\\Phi^{-1}$ is the standard Normal quantile function
-- $\\alpha$ is Type I error
-- $\\beta$ is Type II error, meaning $1-\\beta$ is power`}
-                    rCode={`mu=115
-mu0=120
-sd=24
+                       $n=p_0(1-p_0)\\left(\\frac{z_{1-\\alpha}+z_{1-\\beta}\\sqrt{\\frac{p(1-p)}{p_0(1-p_0)}}}{p-p_0}\\right)^2$
+$1-\\beta=\\Phi\\left(\\sqrt{\\frac{p_0(1-p_0)}{p(1-p)}}\\left(\\frac{|p-p_0|\\sqrt{n}}{\\sqrt{p_0(1-p_0)}}-z_{1-\\alpha}\\right)\\right)$
+where
+
+$n$ is sample size
+$p_0$ is the comparison value
+$\\Phi$ is the standard Normal distribution function
+$\\Phi^{-1}$ is the standard Normal quantile function
+$\\alpha$ is Type I error
+$\\beta$ is Type II error, meaning $1-\\beta$ is power`}
+                    rCode={`p=0.05
+p0=0.02
 alpha=0.05
 beta=0.20
-(n=(sd*(qnorm(1-alpha)+qnorm(1-beta))/(mu-mu0))^2)
-ceiling(n)# 143
-z=(mu-mu0)/sd*sqrt(n)
-(Power=pnorm(abs(z)-qnorm(1-alpha)))`}
+(n=p0*(1-p0)*((qnorm(1-alpha)+qnorm(1-beta)*sqrt(p*(1-p)/p0/(1-p0)))/(p-p0))^2)
+ceiling(n) # 191
+z=(p-p0)/sqrt(p0*(1-p0)/n)(Power=pnorm(sqrt(p0*(1-p0)/p/(1-p))*(abs(z)-qnorm(1-alpha))))`}
                     references={[
-                        "Rosner B. 2010. Fundamentals of Biostatistics. 7th Ed. Brooks/Cole. page 224 and 230."
+                        "Chow S, Shao J, Wang H. 2008. Sample Size Calculations in Clinical Research. 2nd Ed. Chapman & Hall/CRC Biostatistics Series. page 85."
                     ]}
                 />
             </div>

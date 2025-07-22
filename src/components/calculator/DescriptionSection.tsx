@@ -14,31 +14,48 @@ type DescriptionSectionProps = {
 };
 
 const renderContentWithCenteredMath = (text: string) => {
-  return text.split('\n').map((line, index) => {
-    const trimmedLine = line.trim();
-    // Check if the line contains only a single KaTeX expression
-    if (trimmedLine.startsWith('$') && trimmedLine.endsWith('$') && trimmedLine.match(/\$/g)?.length === 2) {
-      const math = trimmedLine.substring(1, trimmedLine.length - 1);
-      return (
-        <div key={index} className="text-center">
-          <InlineMath math={math} />
-        </div>
-      );
-    }
+  // Split the text by math delimiters ($...$), preserving the delimiters.
+  // The 's' flag allows '.' to match newline characters, for multi-line math.
+  const parts = text.split(/(\$.*?\$)/s);
 
-    // Otherwise, render the line with possible inline math
-    return (
-      <div key={index}>
-        {line.split('$').map((part, i) =>
-          i % 2 === 1 ? (
-            <InlineMath key={i} math={part} />
-          ) : (
-            <span key={i}>{part}</span>
-          )
-        )}
-      </div>
-    );
-  });
+  return (
+    <>
+      {parts.map((part, index) => {
+        if (!part) return null;
+
+        if (part.startsWith('$') && part.endsWith('$')) {
+          const math = part.substring(1, part.length - 1);
+
+          // Heuristic to determine if the math should be a block element (centered).
+          // A block if:
+          // 1. The math content itself contains newlines (e.g., an array environment).
+          // 2. It's surrounded by newlines (or document boundaries), meaning it was on its own line.
+          const prevPart = index > 0 ? parts[index - 1] : '';
+          const nextPart = index < parts.length - 1 ? parts[index + 1] : '';
+          const isBlock =
+            math.includes('\n') ||
+            ((prevPart.trim() === '' || prevPart.endsWith('\n')) &&
+             (nextPart.trim() === '' || nextPart.startsWith('\n')));
+
+          if (isBlock) {
+            return (
+              <div key={index} className="text-center">
+                <InlineMath math={math} />
+              </div>
+            );
+          }
+          return <InlineMath key={index} math={math} />;
+        } else {
+          // For text parts, render them while preserving whitespace and newlines.
+          return (
+            <span key={index} style={{ whiteSpace: 'pre-wrap' }}>
+              {part}
+            </span>
+          );
+        }
+      })}
+    </>
+  );
 };
 
 export function DescriptionSection({ title, summary, formulas, rCode, references }: DescriptionSectionProps) {
@@ -59,7 +76,7 @@ export function DescriptionSection({ title, summary, formulas, rCode, references
       </div>
       <div>
         <h2 className="text-xl font-semibold mb-4">R Code</h2>
-        <SyntaxHighlighter language="r" style={vs} customStyle={{ fontSize: '1rem' }}>
+        <SyntaxHighlighter language="r" showLineNumbers={true} style={vs} customStyle={{ fontSize: '1rem' }}>
           {rCode}
         </SyntaxHighlighter>
       </div>

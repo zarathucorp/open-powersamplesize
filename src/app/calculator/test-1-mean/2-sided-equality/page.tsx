@@ -23,31 +23,31 @@ type ValidationErrors = {
 export default function Test1Mean2SidedEqualityPage() {
     const [solveFor, setSolveFor] = useState<string>("sampleSize");
     const [params, setParams] = useState<CalcParams>({
-        alpha: 0.05,
         power: "0.8000",
         sampleSize: 32,
+        alpha: 0.05,
         mean: 2,
         nullHypothesisMean: 1.5,
         stdDev: 1,
     });
     const [plotData, setPlotData] = useState<any[]>([]);
     const [xAxisVar, setXAxisVar] = useState<string>("mean");
-    const [xAxisMin, setXAxisMin] = useState<number>(1.6);
-    const [xAxisMax, setXAxisMax] = useState<number>(2.4);
+    const [xAxisMin, setXAxisMin] = useState<number>(0);
+    const [xAxisMax, setXAxisMax] = useState<number>(0);
     const [yAxisVars, setYAxisVars] = useState<string[]>([]);
     const [lineColors, setLineColors] = useState<{ [key: string]: string }>({});
     const [errors, setErrors] = useState<ValidationErrors>({});
 
     useEffect(() => {
         if (xAxisVar === 'mean') {
-            setXAxisMin(1.8);
-            setXAxisMax(2.2);
+            setXAxisMin(Math.max(0.1, params.mean - 2));
+            setXAxisMax(params.mean + 2);
         } else if (xAxisVar === 'nullHypothesisMean') {
-            setXAxisMin(1.35);
-            setXAxisMax(1.65);
+            setXAxisMin(Math.max(0.1, params.nullHypothesisMean - 2));
+            setXAxisMax(params.nullHypothesisMean + 2);
         } else if (xAxisVar === 'stdDev') {
-            setXAxisMin(0.9);
-            setXAxisMax(1.1);
+            setXAxisMin(Math.max(0.1, params.stdDev * 0.5));
+            setXAxisMax(params.stdDev * 1.5);
         }
     }, [xAxisVar]);
 
@@ -178,13 +178,17 @@ export default function Test1Mean2SidedEqualityPage() {
     };
 
     const inputFields = [
-        { name: 'alpha', label: 'Alpha (α)', type: 'number' as const },
         { name: 'power', label: 'Power (1-β)', type: 'text' as const },
         { name: 'sampleSize', label: 'Sample Size (n)', type: 'number' as const },
+        { name: 'alpha', label: 'Alpha (α)', type: 'number' as const },
         { name: 'mean', label: 'Mean (μ)', type: 'number' as const },
         { name: 'nullHypothesisMean', label: 'Null Hypothesis Mean (μ₀)', type: 'number' as const },
         { name: 'stdDev', label: 'Standard Deviation (σ)', type: 'number' as const },
     ];
+
+    const xAxisOptions = inputFields
+        .filter(field => !['alpha', 'power', 'sampleSize'].includes(field.name))
+        .map(field => ({ value: field.name, label: field.label }));
 
     return (
         <div className="space-y-8">
@@ -221,6 +225,7 @@ export default function Test1Mean2SidedEqualityPage() {
                                 yAxisLabel="Sample Size"
                                 yAxisVars={yAxisVars}
                                 lineColors={lineColors}
+                                xAxisOptions={xAxisOptions}
                             />
                         </CardContent>
                     </Card>
@@ -235,7 +240,7 @@ $H_0: \\mu = \\mu_0$
 $H_1: \\mu \\neq \\mu_0$`}
                     formulas={`This calculator uses the following formulas to compute sample size and power, respectively:
 
-$n = \\left(\\frac{\\sigma(z_{1-\\alpha/2} + z_{1-\\beta})}{\\mu - \\mu_0}\\right)^2$
+$n = \\left(\\sigma\\frac{z_{1-\\alpha/2} + z_{1-\\beta}}{\\mu - \\mu_0}\\right)^2$
 
 $1-\\beta = \\Phi(z - z_{1-\\alpha/2}) + \\Phi(-z - z_{1-\\alpha/2}), \\quad z = \\frac{\\mu - \\mu_0}{\\sigma / \\sqrt{n}}$
 

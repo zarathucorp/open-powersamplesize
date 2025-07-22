@@ -49,7 +49,7 @@ type PlotSectionProps = {
   yAxisLabel?: string;
   yAxisVars: string[];
   lineColors: { [key: string]: string };
-  customXAxisOptions?: { value: string; label: string }[];
+  xAxisOptions: { value: string; label: string }[];
 };
 
 export function PlotSection({
@@ -63,7 +63,7 @@ export function PlotSection({
   yAxisLabel,
   yAxisVars,
   lineColors,
-  customXAxisOptions = [],
+  xAxisOptions
 }: PlotSectionProps) {
 
   const yAxisFormatter = yAxisLabel?.toLowerCase().includes('power') ? formatPower : formatInteger;
@@ -169,11 +169,8 @@ export function PlotSection({
                   <SelectValue placeholder="Select X-axis variable" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="mean">True mean (μ)</SelectItem>
-                  <SelectItem value="nullHypothesisMean">Null Hypothesis mean (μ₀)</SelectItem>
-                  <SelectItem value="stdDev">Standard Deviation (σ)</SelectItem>
-                  {customXAxisOptions.map(option => (
-                    <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
+                  {xAxisOptions.map(option => (
+                      <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
