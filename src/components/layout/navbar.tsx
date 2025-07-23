@@ -8,7 +8,7 @@ import {
   NavigationMenuLink,
   NavigationMenuList,
 } from "@/components/ui/navigation-menu";
-import { Github, Linkedin, ExternalLink } from "lucide-react";
+import { Github, Linkedin, ExternalLink, Scale } from "lucide-react";
 
 const isProd = process.env.NODE_ENV === "production";
 const repo = "open-powersamplesize";
@@ -67,6 +67,16 @@ export function Navbar() {
                 <Link href="https://www.linkedin.com/company/zarathu" target="_blank" rel="noopener noreferrer" className="flex items-center">
                   <Linkedin className="w-6 h-6" />
                   {/* LinkedIn */}
+                </Link>
+              </NavigationMenuLink>
+            </NavigationMenuItem>
+            <NavigationMenuItem>
+              <NavigationMenuLink
+                asChild
+              >
+                <Link href={`${basePath}/LICENSE`} target="_blank" rel="noopener noreferrer" className="flex items-center">
+                  <Scale className="w-6 h-6" />
+                  {/* MIT License */}
                 </Link>
               </NavigationMenuLink>
             </NavigationMenuItem>
