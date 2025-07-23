@@ -143,33 +143,34 @@ const menuItems = [
 	},
 ];
 
-export function Sidebar() {
+export function Sidebar({ onLinkClick }: { onLinkClick?: () => void }) {
 	const pathname = usePathname();
 
 	return (
-        <aside className="w-64 border-r p-4 overflow-y-auto">
-            {menuItems.map((section) => (
+		<div className="p-4 overflow-y-auto h-full">
+			{menuItems.map((section) => (
 				<div key={section.title} className="mb-4">
 					<h2 className="text-lg font-semibold mb-2">{section.title}</h2>
 					<nav className="flex flex-col gap-1">
 						{section.items.map((link) => (
 							<Link
-                                key={link.name}
-                                href={link.href}
-                                className={cn(
+								key={link.name}
+								href={link.href}
+								className={cn(
 									"px-3 py-2 rounded-md text-sm font-medium",
 									pathname === link.href
 										? "bg-accent text-accent-foreground"
 										: "text-muted-foreground hover:bg-accent/50"
 								)}
-								>
+								onClick={onLinkClick}
+							>
 								{link.name}
 							</Link>
 						))}
 					</nav>
 				</div>
 			))}
-        </aside>
-    );
+		</div>
+	);
 }
 
