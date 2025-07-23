@@ -10,6 +10,10 @@ import {
 } from "@/components/ui/navigation-menu";
 import { Github, Linkedin, ExternalLink } from "lucide-react";
 
+const isProd = process.env.NODE_ENV === "production";
+const repo = "open-powersamplesize";
+const basePath = isProd ? `/${repo}` : "";
+
 export function Navbar() {
   return (
     <header className="border-b p-4 dark bg-background text-foreground">
@@ -25,7 +29,7 @@ export function Navbar() {
               >
                 <Link href="https://zarathu.com" target="_blank" rel="noopener noreferrer"  className="flex items-center">
                   Zarathu
-                  <Image src="/logo.svg" alt="Home" width={24} height={24} />
+                  <Image src={`${basePath}/logo.svg`} alt="Home" width={24} height={24} />
                 </Link>
               </NavigationMenuLink>
             </NavigationMenuItem>
