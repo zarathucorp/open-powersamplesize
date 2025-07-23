@@ -58,7 +58,7 @@ export default function McNemar2SidedEqualityPage() {
         }
     }, [xAxisVar, params]);
 
-    const validate = () => {
+    const validate = useCallback(() => {
         const newErrors: ValidationErrors = {};
         const { power, p10, p01 } = params;
         if (power) {
@@ -83,10 +83,14 @@ export default function McNemar2SidedEqualityPage() {
         }
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
-    };
+    }, [params])
 
     const updatePlotData = useCallback(() => {
         const { alpha, power } = params;
+        if (!validate()) {
+            setPlotData([]);
+            return;
+        };
         const data = [];
 
         const powerValue = power ? parseFloat(power) : null;
@@ -148,10 +152,10 @@ export default function McNemar2SidedEqualityPage() {
             data.push(point);
         }
         setPlotData(data);
-    }, [params, xAxisMin, xAxisMax, xAxisVar]);
+    }, [validate, xAxisMin, xAxisMax, xAxisVar]);
 
-    const handleCalculate = () => {
-        if (!validate()) return;
+    const handleCalculate = useCallback(() => {
+        // if (!validate()) return;
 
         const { alpha, power, sampleSize, p10, p01 } = params;
         
@@ -199,7 +203,7 @@ export default function McNemar2SidedEqualityPage() {
             }
         }
         updatePlotData();
-    };
+    },[validate, params, solveFor])
 
     useEffect(() => {
         updatePlotData();
@@ -289,21 +293,26 @@ Group \\quad 'A' & Success & p_{11} & p_{10} \\\\
 
 Interest is in comparing the following hypotheses:
 
-$H_0:$ Both groups have the same success probability
-$H_1:$The success probability is not equal between the Groups
+$H_0: \\text{Both groups have the same success probability}$
+$H_1: \\text{The success probability is not equal between the Groups}$
 
 Mathematically, this can be represented as
+
 $H_0:p_{10}=p_{01}$
 $H_1:p_{10}\\neq p_{01}$
 
 In the formulas below, we use the notation that
+
 $p_{disc}=p_{10}+p_{01}$
 
 and
+
 $p_{diff}=p_{10}-p_{01}$`}
                     formulas={`This calculator uses the following formulas to compute sample size and power, respectively:
+
 $n=\\left(\\frac{z_{1-\\alpha/2}\\sqrt{p_{disc}}+z_{1-\\beta}\\sqrt{p_{disc}-p_{diff}^2}}{p_{diff}}\\right)^2$
 $1-\\beta=\\Phi\\left(\\frac{p_{diff}\\sqrt{n}-z_{1-\\alpha/2}\\sqrt{p_{disc}}}{\\sqrt{p_{disc}-p_{diff}^2}}\\right)$
+
 where
 
 $n$ is sample size
@@ -313,8 +322,8 @@ $\\alpha$ is Type I error
 $\\beta$ is Type II error, meaning $1-\\beta$ is power`}
                     rCode={`p01=0.45
 p10=0.05
-alpha=0.05*2 # *2 to convert cited example's 1-sided test to 2-sided test
-beta=0.10
+alpha=0.05
+beta=0.20
 pdisc=p10+p01
 pdiff=p10-p01
 (n=((qnorm(1-alpha/2)*sqrt(pdisc)+qnorm(1-beta)*sqrt(pdisc-pdiff^2))/pdiff)^2)

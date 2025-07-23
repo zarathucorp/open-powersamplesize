@@ -92,13 +92,13 @@ export function PlotSection({
     );
   };
 
-  const [localMin, setLocalMin] = useState(xAxisMin);
-  const [localMax, setLocalMax] = useState(xAxisMax);
+  const [localMin, setLocalMin] = useState(Number(xAxisMin.toFixed(4)));
+  const [localMax, setLocalMax] = useState(Number(xAxisMax.toFixed(4)));
   const [zoomedDomain, setZoomedDomain] = useState({ min: xAxisMin, max: xAxisMax });
 
   useEffect(() => {
-    setLocalMin(xAxisMin);
-    setLocalMax(xAxisMax);
+    setLocalMin(Number(xAxisMin.toFixed(4)));
+    setLocalMax(Number(xAxisMax.toFixed(4)));
     setZoomedDomain({ min: xAxisMin, max: xAxisMax });
   }, [xAxisMin, xAxisMax, plotData]);
 
@@ -132,7 +132,7 @@ export function PlotSection({
             allowDataOverflow
           />
           <YAxis
-            label={{ value: yAxisLabel, angle: -90, position: 'insideLeft' }}
+            label={{ value: yAxisLabel, angle: -90, position: 'right', offset: 10 }}
             tickFormatter={yAxisFormatter}
           />
           <Tooltip formatter={yAxisFormatter} labelFormatter={formatNumber as (value: number | string) => string} />
@@ -145,16 +145,13 @@ export function PlotSection({
               stroke={lineColors[yVar]}
               dot={false}
               strokeWidth={2}
-              connectNulls
             />
           ))}
-          {isInteractive && plotData.length > 0 && (
+          {isInteractive && filteredData.length > 0 && (
             <Brush
               dataKey={xAxisVar}
               height={30}
               stroke="#8884d8"
-              startIndex={0}
-              endIndex={filteredData.length - 1}
               tickFormatter={formatNumber}
               onChange={(e) => {
                 if (e.startIndex !== undefined && e.endIndex !== undefined) {

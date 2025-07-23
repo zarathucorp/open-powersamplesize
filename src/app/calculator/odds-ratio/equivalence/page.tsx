@@ -107,9 +107,10 @@ export default function OddsRatioEquivalenceCalculator() {
         const OR = (pA * (1 - pB)) / (pB * (1 - pA));
         if (Math.abs(Math.log(OR)) >= delta) return null;
         const z_alpha = jStat.normal.inv(1 - alpha, 0, 1);
-        const z_beta_2 = jStat.normal.inv(1 - power / 2, 0, 1);
+        const beta = 1 - power;
+        const z_beta_2 = jStat.normal.inv(1 - beta / 2, 0, 1);
         const term1 = 1 / (kappa * pA * (1 - pA)) + 1 / (pB * (1 - pB));
-        const term2 = Math.pow((z_alpha + z_beta_2) / (delta - Math.abs(Math.log(OR))), 2);
+        const term2 = Math.pow((z_alpha + z_beta_2) / (Math.abs(Math.log(OR)) - delta), 2);
         const nB = term1 * term2;
         return Math.ceil(nB);
     }, []);

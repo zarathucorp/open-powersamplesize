@@ -29,7 +29,7 @@ export default function McNemar1SidedPage() {
     const [solveFor, setSolveFor] = useState<string>("sampleSize");
     const [params, setParams] = useState<CalcParams>({
         power: "0.8000",
-        sampleSize: 23,
+        sampleSize: 18,
         alpha: 0.05,
         p10: 0.05,
         p01: 0.45,
@@ -51,9 +51,9 @@ export default function McNemar1SidedPage() {
             setXAxisMin(Math.max(0.001, p01 * 0.5));
             setXAxisMax(Math.min(0.999, p01 * 1.5));
         }
-    }, [xAxisVar, params]);
+    }, [xAxisVar, params.p10, params.p01]);
 
-    const validate = () => {
+    const validate = useCallback(() => {
         const newErrors: ValidationErrors = {};
         if (params.power) {
             const powerValue = parseFloat(params.power);
@@ -74,10 +74,14 @@ export default function McNemar1SidedPage() {
         }
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
-    };
+    },[params])
 
     const updatePlotData = useCallback(() => {
         const { alpha, power, p10, p01 } = params;
+        if (!validate()) {
+            setPlotData([]);
+            return;
+        };
         const data = [];
 
         const powerValue = power ? parseFloat(power) : null;
@@ -139,10 +143,10 @@ export default function McNemar1SidedPage() {
             data.push(point);
         }
         setPlotData(data);
-    }, [params, xAxisMin, xAxisMax, xAxisVar]);
+    }, [validate, xAxisMin, xAxisMax, xAxisVar]);
 
-    const handleCalculate = () => {
-        if (!validate()) return;
+    const handleCalculate = useCallback(() => {
+        // if (!validate()) return;
 
         const { alpha, power, sampleSize, p10, p01 } = params;
         
@@ -192,7 +196,7 @@ export default function McNemar1SidedPage() {
             }
         }
         updatePlotData();
-    };
+    },[validate, params, solveFor]);
 
     useEffect(() => {
         updatePlotData();
@@ -315,7 +319,7 @@ $\\beta$ is Type II error, meaning $1-\\beta$ is power`}
                     rCode={`p01=0.45
 p10=0.05
 alpha=0.05
-beta=0.10
+beta=0.20
 pdisc=p10+p01
 pdiff=p10-p01
 (n=((qnorm(1-alpha)*sqrt(pdisc)+qnorm(1-beta)*sqrt(pdisc-pdiff^2))/pdiff)^2)

@@ -30,9 +30,9 @@ type ValidationErrors = {
 };
 
 const calculateSampleSize = (power: number, pA: number, pB: number, delta: number, kappa: number, alpha: number): number | null => {
-    if (delta <= Math.abs(pA - pB) || pA <= 0 || pA >= 1 || pB <= 0 || pB >= 1 || kappa <= 0 || power <= 0 || power >= 1) return null;
+    if (Math.abs(pA - pB) <= delta || pA <= 0 || pA >= 1 || pB <= 0 || pB >= 1 || kappa <= 0 || power <= 0 || power >= 1) return null;
     const z_alpha = jStat.normal.inv(1 - alpha, 0, 1);
-    const z_beta_half = jStat.normal.inv(1 - power / 2, 0, 1);
+    const z_beta_half = jStat.normal.inv(1 - (1 - power) / 2, 0, 1);
     const term1 = (pA * (1 - pA) / kappa) + (pB * (1 - pB));
     const term2_num = z_alpha + z_beta_half;
     const term2_den = Math.abs(pA - pB) - delta;
@@ -42,14 +42,14 @@ const calculateSampleSize = (power: number, pA: number, pB: number, delta: numbe
 };
 
 const calculatePower = (nB: number, pA: number, pB: number, delta: number, kappa: number, alpha: number): number | null => {
-    if (nB <= 0 || pA <= 0 || pA >= 1 || pB <= 0 || pB >= 1 || kappa <= 0) return null;
+    if (nB <= 0 || pA <= 0 || pA >= 1 || pB <= 0 || pB >= 1 || kappa <= 0 || Math.abs(pA - pB) <= delta) return null;
     const nA = kappa * nB;
     const z_num = Math.abs(pA - pB) - delta;
     const z_den = Math.sqrt((pA * (1 - pA) / nA) + (pB * (1 - pB) / nB));
     if (z_den === 0) return null;
     const z = z_num / z_den;
     const z_alpha = jStat.normal.inv(1 - alpha, 0, 1);
-    const power = jStat.normal.cdf(z - z_alpha, 0, 1) + jStat.normal.cdf(-z - z_alpha, 0, 1);
+    const power = 2 * (jStat.normal.cdf(z - z_alpha, 0, 1) + jStat.normal.cdf(-z - z_alpha, 0, 1)) - 1;
     return power;
 };
 
@@ -59,7 +59,7 @@ export default function Compare2ProportionsEquivalence() {
     // TODO: 초기 파라미터 값을 설정하세요.
     const [params, setParams] = useState<CalcParams>({
         power: "0.8000", // 고정
-        sampleSize: 135,
+        sampleSize: 136,
         alpha: 0.05,
         pA: 0.65,
         pB: 0.85,
@@ -74,7 +74,7 @@ export default function Compare2ProportionsEquivalence() {
     const [lineColors, setLineColors] = useState<{ [key: string]: string }>({});
     const [errors, setErrors] = useState<ValidationErrors>({});
 
-    const validate = () => {
+    const validate = useCallback(() => {
         const newErrors: ValidationErrors = {};
         const { power, pA, pB, delta, kappa } = params;
         if (power) {
@@ -91,19 +91,25 @@ export default function Compare2ProportionsEquivalence() {
         }
         if (delta <= 0) {
             newErrors.delta = "Margin of equivalence must be positive.";
+        } else if (Math.abs(pA - pB) <= delta) {
+            newErrors.delta = "For this test, |pA - pB| must be > δ.";
         }
         if (kappa <= 0) {
             newErrors.kappa = "Ratio must be positive.";
         }
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
-    };
+    }, [params]);
 
     const updatePlotData = useCallback(() => {
-        const { alpha, pA, pB, delta, kappa } = params;
+        const { alpha, power, pA, pB, delta, kappa } = params;
+        if (!validate()) {
+            setPlotData([]);
+            return;
+        };
 
         const data = [];
-        const powerValue = params.power ? parseFloat(params.power) : null;
+        const powerValue = power ? parseFloat(power) : null;
         const powerScenarios: { name: string, value: number }[] = [];
         const colors = ['#8884d8', '#82ca9d', '#ffc658'];
         const newColors: { [key: string]: string } = {};
@@ -143,10 +149,10 @@ export default function Compare2ProportionsEquivalence() {
             data.push(point);
         }
         setPlotData(data);
-    }, [params, xAxisMin, xAxisMax, xAxisVar]);
+    }, [validate, xAxisMin, xAxisMax, xAxisVar]);
 
-    const handleCalculate = () => {
-        if (!validate()) return;
+    const handleCalculate = useCallback(() => {
+        // if (!validate()) return;
 
         const { alpha, power, sampleSize, pA, pB, delta, kappa } = params;
         
@@ -173,19 +179,24 @@ export default function Compare2ProportionsEquivalence() {
                 setParams(p => ({...p, sampleSize: null}));
             }
         }
-        updatePlotData();
-    };
+    }, [validate, params, solveFor]);
 
     useEffect(() => {
         updatePlotData();
     }, [updatePlotData]);
 
     useEffect(() => {
-        const { pA, pB, delta, kappa } = params;
+        const { pA, pB, kappa } = params;
         const diff = Math.abs(pA - pB);
         if (xAxisVar === 'delta') {
-            setXAxisMin(Math.max(diff + 0.01, delta * 0.5));
-            setXAxisMax(delta * 1.5);
+            const maxDelta = diff - 0.001;
+            if (maxDelta > 0) {
+                setXAxisMin(0.001);
+                setXAxisMax(maxDelta);
+            } else {
+                setXAxisMin(0.01);
+                setXAxisMax(0.1);
+            }
         } else if (xAxisVar === 'pA') {
             setXAxisMin(Math.max(0.01, pA * 0.5));
             setXAxisMax(Math.min(0.99, pA * 1.5));
@@ -267,7 +278,6 @@ export default function Compare2ProportionsEquivalence() {
                     summary={`This calculator is useful when we wish to test whether the proportions in two groups are equivalent, without concern of which group's proportion is larger. Suppose we collect a sample from a group 'A' and a group 'B'; that is we collect two samples, and will conduct a two-sample test. For example, we may wish to test whether a new product is equivalent to an existing, industry standard product. Here, the 'burden of proof', so to speak, falls on the new product; that is, equivalence is actually represented by the alternative, rather than the null hypothesis.
 
 $H_0:|p_A-p_B| \\ge \\delta$
-
 $H_1:|p_A-p_B| < \\delta$
 
 where $\\delta$ is the superiority or non-inferiority margin and the ratio between the sample sizes of the two groups is
