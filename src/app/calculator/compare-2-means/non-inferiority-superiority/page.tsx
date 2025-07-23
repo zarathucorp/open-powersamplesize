@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { jStat } from "jstat";
 import { CalculatorInputArea } from "@/components/calculator/CalculatorInputArea";
 import { PlotSection } from "@/components/calculator/PlotSection";
@@ -16,6 +16,10 @@ type CalcParams = {
     stdDev: number;
     delta: number;
     kappa: number;
+};
+
+type PlotDataPoint = {
+    [key: string]: number | null;
 };
 
 type ValidationErrors = {
@@ -36,7 +40,7 @@ export default function Compare2MeansNonInferioritySuperiorityPage() {
         delta: 5,
         kappa: 1,
     });
-    const [plotData, setPlotData] = useState<any[]>([]);
+    const [plotData, setPlotData] = useState<PlotDataPoint[]>([]);
     const [xAxisVar, setXAxisVar] = useState<string>("delta");
     const [xAxisMin, setXAxisMin] = useState<number>(4);
     const [xAxisMax, setXAxisMax] = useState<number>(6);
@@ -62,7 +66,7 @@ export default function Compare2MeansNonInferioritySuperiorityPage() {
             setXAxisMin(Math.max(0.1, kappa * 0.5));
             setXAxisMax(kappa * 1.5);
         }
-    }, [xAxisVar, params.stdDev, params.delta, params.muA, params.muB, params.kappa]);
+    }, [xAxisVar, params]);
 
     const validate = () => {
         const newErrors: ValidationErrors = {};
@@ -82,7 +86,7 @@ export default function Compare2MeansNonInferioritySuperiorityPage() {
         return Object.keys(newErrors).length === 0;
     };
 
-    const updatePlotData = () => {
+    const updatePlotData = useCallback(() => {
         const { alpha, power, muA, muB, stdDev, delta, kappa } = params;
         const data = [];
 
@@ -113,7 +117,7 @@ export default function Compare2MeansNonInferioritySuperiorityPage() {
 
         for (let i = 0; i < 100; i++) {
             const x = xAxisMin + (xAxisMax - xAxisMin) * (i / 99);
-            let point: any = { [xAxisVar]: x };
+            const point: PlotDataPoint = { [xAxisVar]: x };
             
             powerScenarios.forEach(scenario => {
                 let sampleSize: number | null = null;
@@ -151,7 +155,7 @@ export default function Compare2MeansNonInferioritySuperiorityPage() {
             data.push(point);
         }
         setPlotData(data);
-    };
+    }, [params, xAxisMin, xAxisMax, xAxisVar]);
 
     const handleCalculate = () => {
         if (!validate()) return;
@@ -199,9 +203,9 @@ export default function Compare2MeansNonInferioritySuperiorityPage() {
 
     useEffect(() => {
         updatePlotData();
-    }, [params, xAxisVar, xAxisMin, xAxisMax]);
+    }, [updatePlotData]);
 
-    const handleParamsChange = (newParams: { [key: string]: any }) => {
+    const handleParamsChange = (newParams: { [key: string]: string | number | null }) => {
         setParams(prevParams => ({ ...prevParams, ...newParams }));
     };
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { jStat } from "jstat";
 import { CalculatorInputArea } from "@/components/calculator/CalculatorInputArea";
 import { PlotSection } from "@/components/calculator/PlotSection";
@@ -16,6 +16,10 @@ type CalcParams = {
     hr0: number;
     pE: number;
     pA: number;
+};
+
+type PlotDataPoint = {
+    [key: string]: number | null;
 };
 
 type ValidationErrors = {
@@ -39,7 +43,7 @@ export default function CoxPH2SidedEqualityPage() {
         pE: 0.8,
         pA: 0.5,
     });
-    const [plotData, setPlotData] = useState<any[]>([]);
+    const [plotData, setPlotData] = useState<PlotDataPoint[]>([]);
     const [xAxisVar, setXAxisVar] = useState<string>("hr");
     const [xAxisMin, setXAxisMin] = useState<number>(0);
     const [xAxisMax, setXAxisMax] = useState<number>(0);
@@ -62,7 +66,7 @@ export default function CoxPH2SidedEqualityPage() {
             setXAxisMin(Math.max(0.01, pA * 0.5));
             setXAxisMax(Math.min(0.99, pA * 1.5));
         }
-    }, [xAxisVar, params.hr, params.hr0, params.pE, params.pA]);
+    }, [xAxisVar, params]);
 
     const validate = () => {
         const newErrors: ValidationErrors = {};
@@ -91,7 +95,7 @@ export default function CoxPH2SidedEqualityPage() {
         return Object.keys(newErrors).length === 0;
     };
 
-    const updatePlotData = () => {
+    const updatePlotData = useCallback(() => {
         const { alpha, power, hr, hr0, pE, pA } = params;
         const data = [];
 
@@ -120,7 +124,7 @@ export default function CoxPH2SidedEqualityPage() {
 
         for (let i = 0; i < 100; i++) {
             const x = xAxisMin + (xAxisMax - xAxisMin) * (i / 99);
-            let point: any = { [xAxisVar]: x };
+            const point: PlotDataPoint = { [xAxisVar]: x };
             
             powerScenarios.forEach(scenario => {
                 let sampleSize: number | null = null;
@@ -152,7 +156,7 @@ export default function CoxPH2SidedEqualityPage() {
             data.push(point);
         }
         setPlotData(data);
-    };
+    }, [params, xAxisMin, xAxisMax, xAxisVar]);
 
     const handleCalculate = () => {
         if (!validate()) return;
@@ -194,9 +198,9 @@ export default function CoxPH2SidedEqualityPage() {
     // 변경하지 말 것
     useEffect(() => {
         updatePlotData();
-    }, [xAxisVar, xAxisMin, xAxisMax]);
+    }, [updatePlotData]);
 
-    const handleParamsChange = (newParams: { [key: string]: any }) => {
+    const handleParamsChange = (newParams: { [key: string]: string | number | null }) => {
         setParams(prevParams => ({ ...prevParams, ...newParams }));
     };
 

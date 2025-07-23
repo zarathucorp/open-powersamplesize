@@ -15,31 +15,34 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
-const formatNumber = (value: any) => {
+const formatNumber = (value: number | string) => {
   if (typeof value === 'number') {
     return value.toFixed(2);
   }
   return value;
 };
 
-const formatInteger = (value: any) => {
+const formatInteger = (value: number | string) => {
   if (typeof value === 'number') {
     return value.toFixed(0);
   }
   return value;
 };
 
-const formatPower = (value: any) => {
+const formatPower = (value: number | string) => {
   if (typeof value === 'number') {
     return value.toFixed(4);
   }
   return value;
 }
 
+interface PlotPoint {
+  [key: string]: number | null;
+}
+
 type PlotSectionProps = {
-  plotData: any[];
+  plotData: PlotPoint[];
   xAxisVar: string;
   onXAxisVarChange: (value: string) => void;
   xAxisMin: number;
@@ -101,16 +104,11 @@ export function PlotSection({
 
   const filteredData = useMemo(() => {
     if (!plotData || plotData.length === 0) return [];
-    return plotData.filter(d => d[xAxisVar] >= xAxisMin && d[xAxisVar] <= xAxisMax);
+    return plotData.filter(d => {
+      const xValue = d[xAxisVar];
+      return typeof xValue === 'number' && xValue >= xAxisMin && xValue <= xAxisMax;
+    });
   }, [plotData, xAxisVar, xAxisMin, xAxisMax]);
-
-  const handleBrushChange = (range: { startIndex?: number; endIndex?: number }) => {
-    if (filteredData.length > 0 && range.startIndex !== undefined && range.endIndex !== undefined) {
-      const newMin = filteredData[range.startIndex][xAxisVar];
-      const newMax = filteredData[range.endIndex][xAxisVar];
-      setZoomedDomain({ min: newMin, max: newMax });
-    }
-  };
 
   return (
     <div>
@@ -137,7 +135,7 @@ export function PlotSection({
             label={{ value: yAxisLabel, angle: -90, position: 'insideLeft' }}
             tickFormatter={yAxisFormatter}
           />
-          <Tooltip formatter={yAxisFormatter} labelFormatter={formatNumber} />
+          <Tooltip formatter={yAxisFormatter} labelFormatter={formatNumber as (value: number | string) => string} />
           <Legend content={renderLegend} verticalAlign="top" wrapperStyle={{ paddingBottom: '20px' }} />
           {yAxisVars.map((yVar, index) => (
             <Line
@@ -156,11 +154,15 @@ export function PlotSection({
               height={30}
               stroke="#8884d8"
               startIndex={0}
-              endIndex={plotData.length - 1}
+              endIndex={filteredData.length - 1}
               tickFormatter={formatNumber}
-              onChange={(e: any) => {
-                if (e.startIndex !== null && e.endIndex !== null && plotData[e.startIndex] && plotData[e.endIndex]) {
-                  setZoomedDomain({ min: plotData[e.startIndex][xAxisVar], max: plotData[e.endIndex][xAxisVar] });
+              onChange={(e) => {
+                if (e.startIndex !== undefined && e.endIndex !== undefined) {
+                  const startValue = filteredData[e.startIndex]?.[xAxisVar];
+                  const endValue = filteredData[e.endIndex]?.[xAxisVar];
+                  if (typeof startValue === 'number' && typeof endValue === 'number') {
+                    setZoomedDomain({ min: startValue, max: endValue });
+                  }
                 }
               }}
             />

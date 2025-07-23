@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { jStat } from "jstat";
 import { CalculatorInputArea } from "@/components/calculator/CalculatorInputArea";
 import { PlotSection } from "@/components/calculator/PlotSection";
@@ -17,6 +17,10 @@ type CalcParams = {
     delta: number;
 };
 
+type PlotDataPoint = {
+    [key: string]: number | null;
+};
+
 type ValidationErrors = {
     power?: string;
     alpha?: string;
@@ -25,6 +29,28 @@ type ValidationErrors = {
     kappa?: string;
     delta?: string;
     nB?: string;
+};
+
+const calculateSampleSize = (power: number, pA: number, pB: number, delta: number, kappa: number, alpha: number): number | null => {
+    if (pA - pB <= delta || pA <= 0 || pA >= 1 || pB <= 0 || pB >= 1 || kappa <= 0 || power <= 0 || power >= 1 || alpha <= 0 || alpha >= 1) return null;
+    const z_alpha = jStat.normal.inv(1 - alpha, 0, 1);
+    const z_beta = jStat.normal.inv(power, 0, 1);
+    const term1 = (pA * (1 - pA) / kappa) + (pB * (1 - pB));
+    const term2 = Math.pow((z_alpha + z_beta) / (pA - pB - delta), 2);
+    const nB = term1 * term2;
+    return Math.ceil(nB);
+};
+
+const calculatePower = (nB: number, pA: number, pB: number, delta: number, kappa: number, alpha: number): number | null => {
+    if (nB <= 0 || pA <= 0 || pA >= 1 || pB <= 0 || pB >= 1 || kappa <= 0 || alpha <= 0 || alpha >= 1) return null;
+    const nA = kappa * nB;
+    const z_alpha = jStat.normal.inv(1 - alpha, 0, 1);
+    const numerator = pA - pB - delta;
+    const denominator = Math.sqrt((pA * (1 - pA) / nA) + (pB * (1 - pB) / nB));
+    if (denominator === 0) return null;
+    const z = numerator / denominator;
+    const power = jStat.normal.cdf(z - z_alpha, 0, 1);
+    return power;
 };
 
 export default function Compare2ProportionsNonInferioritySuperiority() {
@@ -38,30 +64,13 @@ export default function Compare2ProportionsNonInferioritySuperiority() {
         kappa: 1,
         delta: -0.10,
     });
-    const [plotData, setPlotData] = useState<any[]>([]);
+    const [plotData, setPlotData] = useState<PlotDataPoint[]>([]);
     const [xAxisVar, setXAxisVar] = useState<string>("pA");
     const [xAxisMin, setXAxisMin] = useState<number>(0);
     const [xAxisMax, setXAxisMax] = useState<number>(0);
     const [yAxisVars, setYAxisVars] = useState<string[]>([]);
     const [lineColors, setLineColors] = useState<{ [key: string]: string }>({});
     const [errors, setErrors] = useState<ValidationErrors>({});
-
-    useEffect(() => {
-        const { pA, pB, kappa, delta } = params;
-        if (xAxisVar === 'delta') {
-            setXAxisMin(delta - 0.1);
-            setXAxisMax(delta + 0.1);
-        } else if (xAxisVar === 'pA') {
-            setXAxisMin(Math.max(0.01, pA * 0.5));
-            setXAxisMax(Math.min(0.99, pA * 1.5));
-        } else if (xAxisVar === 'pB') {
-            setXAxisMin(Math.max(0.01, pB * 0.5));
-            setXAxisMax(Math.min(0.99, pB * 1.5));
-        } else if (xAxisVar === 'kappa') {
-            setXAxisMin(Math.max(0.1, kappa * 0.5));
-            setXAxisMax(kappa * 1.5);
-        }
-    }, [xAxisVar, params.pA, params.pB, params.kappa, params.delta]);
 
     const validate = () => {
         const newErrors: ValidationErrors = {};
@@ -95,11 +104,11 @@ export default function Compare2ProportionsNonInferioritySuperiority() {
         return Object.keys(newErrors).length === 0;
     };
 
-    const updatePlotData = () => {
-        const { alpha, power, pA, pB, kappa, delta } = params;
+    const updatePlotData = useCallback(() => {
+        const { alpha, pA, pB, kappa, delta } = params;
         const data = [];
 
-        const powerValue = power ? parseFloat(power) : null;
+        const powerValue = params.power ? parseFloat(params.power) : null;
         const powerScenarios: { name: string, value: number }[] = [];
         const colors = ['#8884d8', '#82ca9d', '#ffc658'];
         const newColors: { [key: string]: string } = {};
@@ -122,15 +131,11 @@ export default function Compare2ProportionsNonInferioritySuperiority() {
         setYAxisVars(powerScenarios.map(s => s.name));
         setLineColors(newColors);
 
-        const z_alpha = jStat.normal.inv(1 - alpha, 0, 1);
-
         for (let i = 0; i < 100; i++) {
             const x = xAxisMin + (xAxisMax - xAxisMin) * (i / 99);
-            let point: any = { [xAxisVar]: x };
+            const point: PlotDataPoint = { [xAxisVar]: x };
             
             powerScenarios.forEach(scenario => {
-                let nB: number | null = null;
-                
                 let currentPA = pA;
                 let currentPB = pB;
                 let currentKappa = kappa;
@@ -141,20 +146,13 @@ export default function Compare2ProportionsNonInferioritySuperiority() {
                 else if (xAxisVar === 'kappa') currentKappa = x;
                 else if (xAxisVar === 'delta') currentDelta = x;
 
-                if (currentPA > 0 && currentPA < 1 && currentPB > 0 && currentPB < 1 && currentKappa > 0 && (currentPA - currentPB > currentDelta)) {
-                    const z_beta = jStat.normal.inv(scenario.value, 0, 1);
-                    const term1 = (currentPA * (1 - currentPA) / currentKappa) + (currentPB * (1 - currentPB));
-                    const term2 = Math.pow((z_alpha + z_beta) / (currentPA - currentPB - currentDelta), 2);
-                    const calculatedSize = term1 * term2;
-                    nB = Math.ceil(calculatedSize);
-                }
-                
+                const nB = calculateSampleSize(scenario.value, currentPA, currentPB, currentDelta, currentKappa, alpha);
                 point[scenario.name] = nB && nB > 0 ? nB : null;
             });
             data.push(point);
         }
         setPlotData(data);
-    };
+    }, [params, xAxisMin, xAxisMax, xAxisVar]);
 
     const handleCalculate = () => {
         if (!validate()) return;
@@ -162,17 +160,13 @@ export default function Compare2ProportionsNonInferioritySuperiority() {
         const { alpha, power, nB, pA, pB, kappa, delta } = params;
         
         if (solveFor === 'power') {
-            if (nB && nB > 0 && kappa > 0) {
-                const nA = kappa * nB;
-                const z_alpha = jStat.normal.inv(1 - alpha, 0, 1);
-                const numerator = pA - pB - delta;
-                const denominator = Math.sqrt( (pA * (1 - pA) / nA) + (pB * (1 - pB) / nB) );
-                const z = numerator / denominator;
-                const calculatedPower = jStat.normal.cdf(z - z_alpha, 0, 1);
-                
-                const formattedPower = calculatedPower.toFixed(4);
-                if (params.power !== formattedPower) {
-                    setParams(p => ({ ...p, power: formattedPower }));
+            if (nB && nB > 0) {
+                const calculatedPower = calculatePower(nB, pA, pB, delta, kappa, alpha);
+                if (calculatedPower) {
+                    const formattedPower = calculatedPower.toFixed(4);
+                    if (params.power !== formattedPower) {
+                        setParams(p => ({ ...p, power: formattedPower }));
+                    }
                 }
             } else {
                 setParams(p => ({...p, power: null}));
@@ -180,16 +174,9 @@ export default function Compare2ProportionsNonInferioritySuperiority() {
         } else { // solveFor === 'sampleSize'
             const powerValue = power ? parseFloat(power) : null;
             if (powerValue && powerValue > 0 && powerValue < 1) {
-                const z_alpha = jStat.normal.inv(1 - alpha, 0, 1);
-                const z_beta = jStat.normal.inv(powerValue, 0, 1);
-                
-                const term1 = (pA * (1 - pA) / kappa) + (pB * (1 - pB));
-                const term2 = Math.pow((z_alpha + z_beta) / (pA - pB - delta), 2);
-                const calculatedSize = term1 * term2;
-                const finalSize = Math.ceil(calculatedSize);
-
-                if (params.nB !== finalSize) {
-                    setParams(p => ({ ...p, nB: finalSize }));
+                const calculatedSize = calculateSampleSize(powerValue, pA, pB, delta, kappa, alpha);
+                if (calculatedSize && params.nB !== calculatedSize) {
+                    setParams(p => ({ ...p, nB: calculatedSize }));
                 }
             } else {
                 setParams(p => ({...p, nB: null}));
@@ -200,9 +187,26 @@ export default function Compare2ProportionsNonInferioritySuperiority() {
 
     useEffect(() => {
         updatePlotData();
-    }, [xAxisVar, xAxisMin, xAxisMax, params.alpha]);
+    }, [updatePlotData]);
 
-    const handleParamsChange = (newParams: { [key: string]: any }) => {
+    useEffect(() => {
+        const { pA, pB, kappa, delta } = params;
+        if (xAxisVar === 'delta') {
+            setXAxisMin(delta - 0.1);
+            setXAxisMax(delta + 0.1);
+        } else if (xAxisVar === 'pA') {
+            setXAxisMin(Math.max(0.01, pA * 0.5));
+            setXAxisMax(Math.min(0.99, pA * 1.5));
+        } else if (xAxisVar === 'pB') {
+            setXAxisMin(Math.max(0.01, pB * 0.5));
+            setXAxisMax(Math.min(0.99, pB * 1.5));
+        } else if (xAxisVar === 'kappa') {
+            setXAxisMin(Math.max(0.1, kappa * 0.5));
+            setXAxisMax(kappa * 1.5);
+        }
+    }, [xAxisVar, params]);
+
+    const handleParamsChange = (newParams: { [key: string]: string | number | null }) => {
         setParams(prevParams => ({ ...prevParams, ...newParams }));
     };
 
@@ -240,6 +244,7 @@ export default function Compare2ProportionsNonInferioritySuperiority() {
                                 errors={errors}
                                 inputFields={inputFields}
                             />
+                            {nA !== null && <p className="text-sm mt-4">Sample Size (n_A): {nA}</p>}
                         </CardContent>
                     </Card>
                 </div>

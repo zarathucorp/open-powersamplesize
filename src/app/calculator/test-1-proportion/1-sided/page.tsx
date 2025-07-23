@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { jStat } from "jstat";
 import { CalculatorInputArea } from "@/components/calculator/CalculatorInputArea";
 import { PlotSection } from "@/components/calculator/PlotSection";
@@ -13,6 +13,10 @@ type CalcParams = {
     sampleSize: number | null;
     p: number;
     p0: number;
+};
+
+type PlotDataPoint = {
+    [key: string]: number | null;
 };
 
 type ValidationErrors = {
@@ -30,7 +34,7 @@ export default function Test1Proportion1Sided() {
         p: 0.05,
         p0: 0.02,
     });
-    const [plotData, setPlotData] = useState<any[]>([]);
+    const [plotData, setPlotData] = useState<PlotDataPoint[]>([]);
     const [xAxisVar, setXAxisVar] = useState<string>("p");
     const [xAxisMin, setXAxisMin] = useState<number>(0);
     const [xAxisMax, setXAxisMax] = useState<number>(0);
@@ -47,7 +51,7 @@ export default function Test1Proportion1Sided() {
             setXAxisMin(Math.max(0.01, p0 * 0.5));
             setXAxisMax(Math.min(0.99, p0 * 1.5));
         }
-    }, [xAxisVar, params.p, params.p0]);
+    }, [xAxisVar, params]);
 
     const validate = () => {
         const newErrors: ValidationErrors = {};
@@ -72,7 +76,7 @@ export default function Test1Proportion1Sided() {
         return Object.keys(newErrors).length === 0;
     };
 
-    const updatePlotData = () => {
+    const updatePlotData = useCallback(() => {
         const { alpha, power, p, p0 } = params;
         const data = [];
 
@@ -103,7 +107,7 @@ export default function Test1Proportion1Sided() {
 
         for (let i = 0; i < 100; i++) {
             const x = xAxisMin + (xAxisMax - xAxisMin) * (i / 99);
-            let point: any = { [xAxisVar]: x };
+            const point: PlotDataPoint = { [xAxisVar]: x };
             
             powerScenarios.forEach(scenario => {
                 let sampleSize: number | null = null;
@@ -130,7 +134,7 @@ export default function Test1Proportion1Sided() {
             data.push(point);
         }
         setPlotData(data);
-    };
+    }, [params, xAxisMin, xAxisMax, xAxisVar]);
 
     const handleCalculate = () => {
         if (!validate()) return;
@@ -170,15 +174,15 @@ export default function Test1Proportion1Sided() {
 
     useEffect(() => {
         updatePlotData();
-    }, [xAxisVar, xAxisMin, xAxisMax]);
+    }, [updatePlotData]);
 
-    const handleParamsChange = (newParams: { [key: string]: any }) => {
+    const handleParamsChange = (newParams: { [key: string]: string | number | null }) => {
         setParams(prevParams => ({ ...prevParams, ...newParams }));
     };
 
     const inputFields = [
-        { name: 'power', label: 'Power (1-β)', type: 'text' as const, solve: 'power' },
-        { name: 'sampleSize', label: 'Sample Size (n)', type: 'number' as const, solve: 'sampleSize' },
+        { name: 'power', label: 'Power (1-β)', type: 'text' as const, solve: 'power' as const },
+        { name: 'sampleSize', label: 'Sample Size (n)', type: 'number' as const, solve: 'sampleSize' as const },
         { name: 'alpha', label: 'Alpha (α)', type: 'number' as const },
         { name: 'p', label: 'Proportion (p)', type: 'number' as const },
         { name: 'p0', label: 'Comparison Proportion (p0)', type: 'number' as const },

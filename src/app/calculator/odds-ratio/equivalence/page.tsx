@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { jStat } from "jstat";
 import { CalculatorInputArea } from "@/components/calculator/CalculatorInputArea";
 import { PlotSection } from "@/components/calculator/PlotSection";
@@ -12,10 +12,14 @@ type CalcParams = {
     alpha: number;
     power: string | null;
     sampleSize: number | null;
-    pA: number | null;
-    pB: number | null;
-    delta: number | null;
-    kappa: number | null;
+    pA: number;
+    pB: number;
+    delta: number;
+    kappa: number;
+};
+
+type PlotDataPoint = {
+    [key: string]: number | null;
 };
 
 type ValidationErrors = {
@@ -40,7 +44,7 @@ export default function OddsRatioEquivalenceCalculator() {
         delta: 0.50,
         kappa: 1,
     });
-    const [plotData, setPlotData] = useState<any[]>([]);
+    const [plotData, setPlotData] = useState<PlotDataPoint[]>([]);
     const [xAxisVar, setXAxisVar] = useState<string>("pA"); // 가장 처음 나오는 값을 기본 x축 변수로 설정하세요.
     const [xAxisMin, setXAxisMin] = useState<number>(0); // 고정
     const [xAxisMax, setXAxisMax] = useState<number>(0); // 고정
@@ -50,17 +54,17 @@ export default function OddsRatioEquivalenceCalculator() {
 
     useEffect(() => {
         const { pA, pB, delta, kappa } = params;
-        if (xAxisVar === 'delta' && delta) {
+        if (xAxisVar === 'delta') {
             const OR = (pA && pB) ? Math.abs(Math.log((pA * (1 - pB)) / (pB * (1 - pA)))) : 0;
             setXAxisMin(Math.max(OR * 1.01, delta * 0.5));
             setXAxisMax(delta * 1.5);
-        } else if (xAxisVar === 'pA' && pA) {
+        } else if (xAxisVar === 'pA') {
             setXAxisMin(Math.max(0.01, pA * 0.5));
             setXAxisMax(Math.min(0.99, pA * 1.5));
-        } else if (xAxisVar === 'pB' && pB) {
+        } else if (xAxisVar === 'pB') {
             setXAxisMin(Math.max(0.01, pB * 0.5));
             setXAxisMax(Math.min(0.99, pB * 1.5));
-        } else if (xAxisVar === 'kappa' && kappa) {
+        } else if (xAxisVar === 'kappa') {
             setXAxisMin(Math.max(0.1, kappa * 0.5));
             setXAxisMax(kappa * 1.5);
         }
@@ -75,20 +79,20 @@ export default function OddsRatioEquivalenceCalculator() {
                 newErrors.power = "Power must be between 0 and 1.";
             }
         }
-        if (pA === null || pA <= 0 || pA >= 1) {
+        if (pA <= 0 || pA >= 1) {
             newErrors.pA = "p(Outcome in Group A) must be between 0 and 1.";
         }
-        if (pB === null || pB <= 0 || pB >= 1) {
+        if (pB <= 0 || pB >= 1) {
             newErrors.pB = "p(Outcome in Group B) must be between 0 and 1.";
         }
-        if (delta === null || delta <= 0) {
+        if (delta <= 0) {
             newErrors.delta = "Equivalence margin (δ) must be greater than 0.";
         }
-        if (kappa === null || kappa <= 0) {
+        if (kappa <= 0) {
             newErrors.kappa = "Sample size ratio (κ) must be greater than 0.";
         }
 
-        if (pA && pB && delta && pA > 0 && pA < 1 && pB > 0 && pB < 1 && delta > 0) {
+        if (pA > 0 && pA < 1 && pB > 0 && pB < 1 && delta > 0) {
             const OR = (pA * (1 - pB)) / (pB * (1 - pA));
             if (Math.abs(Math.log(OR)) >= delta) {
                 newErrors.general = "Equivalence margin (δ) must be greater than |ln(OR)|.";
@@ -98,11 +102,37 @@ export default function OddsRatioEquivalenceCalculator() {
         return Object.keys(newErrors).length === 0;
     };
 
-    const updatePlotData = () => {
-        const { alpha, power, pA, pB, delta, kappa } = params;
+    const calculateSampleSize = useCallback((power: number, pA: number, pB: number, delta: number, kappa: number, alpha: number): number | null => {
+        if (pA <= 0 || pA >= 1 || pB <= 0 || pB >= 1 || delta <= 0 || kappa <= 0 || power <= 0 || power >= 1 || alpha <= 0 || alpha >= 1) return null;
+        const OR = (pA * (1 - pB)) / (pB * (1 - pA));
+        if (Math.abs(Math.log(OR)) >= delta) return null;
+        const z_alpha = jStat.normal.inv(1 - alpha, 0, 1);
+        const z_beta_2 = jStat.normal.inv(1 - power / 2, 0, 1);
+        const term1 = 1 / (kappa * pA * (1 - pA)) + 1 / (pB * (1 - pB));
+        const term2 = Math.pow((z_alpha + z_beta_2) / (delta - Math.abs(Math.log(OR))), 2);
+        const nB = term1 * term2;
+        return Math.ceil(nB);
+    }, []);
+
+    const calculatePower = useCallback((nB: number, pA: number, pB: number, delta: number, kappa: number, alpha: number): number | null => {
+        if (nB <= 0 || pA <= 0 || pA >= 1 || pB <= 0 || pB >= 1 || delta <= 0 || kappa <= 0 || alpha <= 0 || alpha >= 1) return null;
+        const OR = (pA * (1 - pB)) / (pB * (1 - pA));
+        const lnOR = Math.log(OR);
+        const term1 = 1 / (kappa * pA * (1 - pA)) + 1 / (pB * (1 - pB));
+        if (term1 <= 0) return null;
+        const sigma = Math.sqrt(term1 / nB);
+        if (sigma === 0) return null;
+        const z = (Math.abs(lnOR) - delta) / sigma;
+        const z_alpha = jStat.normal.inv(1 - alpha, 0, 1);
+        const power = 2 * (jStat.normal.cdf(z - z_alpha, 0, 1) + jStat.normal.cdf(-z - z_alpha, 0, 1)) - 1;
+        return power;
+    }, []);
+
+    const updatePlotData = useCallback(() => {
+        const { alpha, pA, pB, delta, kappa } = params;
         const data = [];
 
-        const powerValue = power ? parseFloat(power) : null;
+        const powerValue = params.power ? parseFloat(params.power) : null;
         const powerScenarios: { name: string, value: number }[] = [];
         const colors = ['#8884d8', '#82ca9d', '#ffc658'];
         const newColors: { [key: string]: string } = {};
@@ -118,9 +148,6 @@ export default function OddsRatioEquivalenceCalculator() {
             }
         });
 
-        // sort 하지 말 것
-
-        // Calculate으로 생성된 power는 항상 #8884d8 색상을 사용합니다.
         powerScenarios.forEach((scenario, i) => {
             newColors[scenario.name] = colors[i % colors.length];
         });
@@ -128,15 +155,11 @@ export default function OddsRatioEquivalenceCalculator() {
         setYAxisVars(powerScenarios.map(s => s.name));
         setLineColors(newColors);
 
-        const z_alpha = jStat.normal.inv(1 - alpha, 0, 1);
-
         for (let i = 0; i < 100; i++) {
             const x = xAxisMin + (xAxisMax - xAxisMin) * (i / 99);
-            let point: any = { [xAxisVar]: x };
+            const point: PlotDataPoint = { [xAxisVar]: x };
             
             powerScenarios.forEach(scenario => {
-                let sampleSize: number | null = null;
-                
                 let currentPA = pA;
                 let currentPB = pB;
                 let currentDelta = delta;
@@ -147,28 +170,13 @@ export default function OddsRatioEquivalenceCalculator() {
                 if (xAxisVar === 'delta') currentDelta = x;
                 if (xAxisVar === 'kappa') currentKappa = x;
                 
-                if (currentPA && currentPB && currentDelta && currentKappa &&
-                    currentPA > 0 && currentPA < 1 &&
-                    currentPB > 0 && currentPB < 1 &&
-                    currentDelta > 0 && currentKappa > 0) {
-                    
-                    const OR = (currentPA * (1 - currentPB)) / (currentPB * (1 - currentPA));
-
-                    if (Math.abs(Math.log(OR)) < currentDelta) {
-                        const z_beta_2 = jStat.normal.inv(1 - scenario.value / 2, 0, 1);
-                        const term1 = 1 / (currentKappa * currentPA * (1 - currentPA)) + 1 / (currentPB * (1 - currentPB));
-                        const term2 = Math.pow((z_alpha + z_beta_2) / (currentDelta - Math.abs(Math.log(OR))), 2);
-                        const calculatedN = term1 * term2;
-                        sampleSize = Math.ceil(calculatedN);
-                    }
-                }
-                
+                const sampleSize = calculateSampleSize(scenario.value, currentPA, currentPB, currentDelta, currentKappa, alpha);
                 point[scenario.name] = sampleSize && sampleSize > 0 ? sampleSize : null;
             });
             data.push(point);
         }
         setPlotData(data);
-    };
+    }, [params, xAxisMin, xAxisMax, xAxisVar, calculateSampleSize]);
 
     const handleCalculate = () => {
         if (!validate()) return;
@@ -176,44 +184,23 @@ export default function OddsRatioEquivalenceCalculator() {
         const { alpha, power, sampleSize, pA, pB, delta, kappa } = params;
         
         if (solveFor === 'power') {
-            if (sampleSize && sampleSize > 0 && pA && pB && delta && kappa) {
-                const OR = (pA * (1 - pB)) / (pB * (1 - pA));
-                const lnOR = Math.log(OR);
-
-                const term1 = 1 / (kappa * pA * (1 - pA)) + 1 / (pB * (1 - pB));
-                const sigma = Math.sqrt(term1 / sampleSize);
-                
-                const z = (Math.abs(lnOR) - delta) / sigma;
-                
-                const z_alpha = jStat.normal.inv(1 - alpha, 0, 1);
-                
-                const calculatedPower = 2 * (jStat.normal.cdf(z - z_alpha, 0, 1) + 
-                                      jStat.normal.cdf(-z - z_alpha, 0, 1)) - 1;
-
-                const formattedPower = calculatedPower.toFixed(4);
-                if (params.power !== formattedPower) {
-                    setParams(p => ({ ...p, power: formattedPower }));
+            if (sampleSize && sampleSize > 0) {
+                const calculatedPower = calculatePower(sampleSize, pA, pB, delta, kappa, alpha);
+                if (calculatedPower) {
+                    const formattedPower = calculatedPower.toFixed(4);
+                    if (params.power !== formattedPower) {
+                        setParams(p => ({ ...p, power: formattedPower }));
+                    }
                 }
             } else {
                 setParams(p => ({...p, power: null}));
             }
         } else { // solveFor === 'sampleSize'
             const powerValue = power ? parseFloat(power) : null;
-            if (powerValue && powerValue > 0 && powerValue < 1 && pA && pB && delta && kappa) {
-                const OR = (pA * (1 - pB)) / (pB * (1 - pA));
-                const z_alpha = jStat.normal.inv(1 - alpha, 0, 1);
-
-                const beta = 1 - powerValue;
-                const z_beta_2 = jStat.normal.inv(1 - beta / 2, 0, 1);
-                
-                const term1 = 1 / (kappa * pA * (1 - pA)) + 1 / (pB * (1 - pB));
-                const term2 = Math.pow((z_alpha + z_beta_2) / (Math.abs(Math.log(OR)) - delta), 2);
-                
-                const calculatedSize = term1 * term2;
-                const finalSize = Math.ceil(calculatedSize);
-
-                if (params.sampleSize !== finalSize) {
-                    setParams(p => ({ ...p, sampleSize: finalSize }));
+            if (powerValue && powerValue > 0 && powerValue < 1) {
+                const calculatedSize = calculateSampleSize(powerValue, pA, pB, delta, kappa, alpha);
+                if (calculatedSize && params.sampleSize !== calculatedSize) {
+                    setParams(p => ({ ...p, sampleSize: calculatedSize }));
                 }
             } else {
                 setParams(p => ({...p, sampleSize: null}));
@@ -222,16 +209,14 @@ export default function OddsRatioEquivalenceCalculator() {
         updatePlotData();
     };
 
-    // 바꾸지 말 것
     useEffect(() => {
         updatePlotData();
-    }, [xAxisVar, xAxisMin, xAxisMax]);
+    }, [updatePlotData]);
 
-    const handleParamsChange = (newParams: { [key: string]: any }) => {
+    const handleParamsChange = (newParams: { [key: string]: string | number | null }) => {
         setParams(prevParams => ({ ...prevParams, ...newParams }));
     };
 
-    // TODO: 계산기의 입력 필드를 정의하세요.
     const inputFields = [
         // 필수 입력 필드
         { name: 'power', label: 'Power (1-β)', type: 'text' as const, solve: 'power' as const },
@@ -279,7 +264,7 @@ export default function OddsRatioEquivalenceCalculator() {
                                 onXAxisMinChange={setXAxisMin}
                                 xAxisMax={xAxisMax}
                                 onXAxisMaxChange={setXAxisMax}
-                                yAxisLabel="Sample Size (nB)" // TODO: Y축 레이블을 조정하세요.
+                                yAxisLabel="Sample Size (nB)"
                                 yAxisVars={yAxisVars}
                                 lineColors={lineColors}
                                 xAxisOptions={xAxisOptions}
@@ -290,7 +275,6 @@ export default function OddsRatioEquivalenceCalculator() {
             </div>
 
             <div>
-                {/* TODO: 설명, 수식, R 코드, 참고 문헌을 업데이트하세요. */}
                 <DescriptionSection
                     title="Calculate Sample Size Needed to Test Odds Ratio: Equivalence"
                     summary={`This calculator is useful when we wish to test whether the odds of an outcome in two groups are equivalent, without concern of which group's odds is larger. Suppose we collect a sample from a group 'A' and a group 'B'; that is we collect two samples, and will conduct a two-sample test. For example, we may wish to test whether a new product is equivalent to an existing, industry standard product. Here, the 'burden of proof', so to speak, falls on the new product; that is, equivalence is actually represented by the alternative, rather than the null hypothesis.

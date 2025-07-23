@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { jStat } from "jstat";
 import { CalculatorInputArea } from "@/components/calculator/CalculatorInputArea";
 import { PlotSection } from "@/components/calculator/PlotSection";
@@ -15,6 +15,10 @@ type CalcParams = {
     p: number | null;
     p0: number | null;
     delta: number | null;
+};
+
+type PlotDataPoint = {
+    [key: string]: number | null;
 };
 
 type ValidationErrors = {
@@ -37,7 +41,7 @@ export default function Test1ProportionEquivalence() {
         p0: 0.6,
         delta: 0.2,
     });
-    const [plotData, setPlotData] = useState<any[]>([]);
+    const [plotData, setPlotData] = useState<PlotDataPoint[]>([]);
     const [xAxisVar, setXAxisVar] = useState<string>("p"); // 기본 x축 변수를 설정합니다.
     const [xAxisMin, setXAxisMin] = useState<number>(0.1); // Default
     const [xAxisMax, setXAxisMax] = useState<number>(0.3); // Default
@@ -46,22 +50,24 @@ export default function Test1ProportionEquivalence() {
     const [errors, setErrors] = useState<ValidationErrors>({});
 
     useEffect(() => {
-        // 파라미터에 따라 x축 범위를 설정하는 로직
         const { p, p0, delta } = params;
-        if (p === null || p0 === null || delta === null) return;
-
-        if (xAxisVar === 'delta') {
-            const newMin = Math.max(0.01, Math.abs(p - p0) + 0.01);
-            setXAxisMin(newMin);
-            setXAxisMax(newMin + 0.2);
-        } else if (xAxisVar === 'p') {
-            setXAxisMin(Math.max(0.01, p * 0.5));
-            setXAxisMax(Math.min(0.99, p * 1.5));
+        if (xAxisVar === 'p') {
+            if (p) {
+                setXAxisMin(Math.max(0.01, p * 0.5));
+                setXAxisMax(Math.min(0.99, p * 1.5));
+            }
         } else if (xAxisVar === 'p0') {
-            setXAxisMin(Math.max(0.01, p0 * 0.5));
-            setXAxisMax(Math.min(0.99, p0 * 1.5));
+            if (p0) {
+                setXAxisMin(Math.max(0.01, p0 * 0.5));
+                setXAxisMax(Math.min(0.99, p0 * 1.5));
+            }
+        } else if (xAxisVar === 'delta') {
+            if (delta) {
+                setXAxisMin(Math.max(0.01, delta * 0.5));
+                setXAxisMax(Math.min(0.99, delta * 1.5));
+            }
         }
-    }, [xAxisVar, params.p, params.p0, params.delta]);
+    }, [xAxisVar, params]);
 
     const validate = () => {
         const newErrors: ValidationErrors = {};
@@ -88,7 +94,7 @@ export default function Test1ProportionEquivalence() {
         return Object.keys(newErrors).length === 0;
     };
 
-    const updatePlotData = () => {
+    const updatePlotData = useCallback(() => {
         const { alpha, power, p, p0, delta } = params;
         if (p === null || p0 === null || delta === null) return;
 
@@ -119,7 +125,7 @@ export default function Test1ProportionEquivalence() {
 
         for (let i = 0; i < 100; i++) {
             const x = xAxisMin + (xAxisMax - xAxisMin) * (i / 99);
-            let point: any = { [xAxisVar]: x };
+            const point: PlotDataPoint = { [xAxisVar]: x };
             
             powerScenarios.forEach(scenario => {
                 let sampleSize: number | null = null;
@@ -154,7 +160,7 @@ export default function Test1ProportionEquivalence() {
             data.push(point);
         }
         setPlotData(data);
-    };
+    }, [params, xAxisMin, xAxisMax, xAxisVar]);
 
     const handleCalculate = () => {
         if (!validate()) return;
@@ -190,19 +196,20 @@ export default function Test1ProportionEquivalence() {
                 setParams(p => ({...p, sampleSize: null}));
             }
         }
+        updatePlotData();
     };
 
     useEffect(() => {
         updatePlotData();
-    }, [xAxisVar, xAxisMin, xAxisMax, params]);
+    }, [updatePlotData]);
 
-    const handleParamsChange = (newParams: { [key: string]: any }) => {
+    const handleParamsChange = (newParams: { [key: string]: string | number | null }) => {
         setParams(prevParams => ({ ...prevParams, ...newParams }));
     };
 
     const inputFields = [
-        { name: 'power', label: 'Power (1-β)', type: 'text' as const, solve: 'power' },
-        { name: 'sampleSize', label: 'Sample Size (n)', type: 'number' as const, solve: 'sampleSize' },
+        { name: 'power', label: 'Power (1-β)', type: 'text' as const, solve: 'power' as const },
+        { name: 'sampleSize', label: 'Sample Size (n)', type: 'number' as const, solve: 'sampleSize' as const },
         { name: 'p', label: 'Proportion (p)', type: 'number' as const },
         { name: 'p0', label: 'Comparison Proportion (p0)', type: 'number' as const },
         { name: 'delta', label: 'Margin of Equivalence (δ)', type: 'number' as const },

@@ -4,7 +4,6 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { useIsMobile } from "@/hooks/use-mobile";
 
 type InputField = {
   name: string;
@@ -14,8 +13,8 @@ type InputField = {
 };
 
 type CalculatorInputAreaProps = {
-  params: { [key: string]: any };
-  onParamsChange: (params: { [key: string]: any }) => void;
+  params: { [key: string]: string | number | null };
+  onParamsChange: (params: { [key: string]: string | number | null }) => void;
   solveFor: string;
   onSolveForChange: (value: string) => void;
   onCalculate: () => void;
@@ -34,8 +33,6 @@ export function CalculatorInputArea({
   inputFields,
   solveForOptions
 }: CalculatorInputAreaProps) {
-    const isMobile = useIsMobile();
-
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value } = e.target;
     const field = inputFields.find(f => f.name === id);
@@ -50,7 +47,7 @@ export function CalculatorInputArea({
     onParamsChange({ ...params, [id]: processedValue });
   };
 
-  const handleCopyToClipboard = (value: any) => {
+  const handleCopyToClipboard = (value: string | number | null) => {
     if (value != null) {
       navigator.clipboard.writeText(String(value));
       // You can add a toast notification here to provide feedback.

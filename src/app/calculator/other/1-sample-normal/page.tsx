@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { jStat } from "jstat";
 import { CalculatorInputArea } from "@/components/calculator/CalculatorInputArea";
 import { PlotSection } from "@/components/calculator/PlotSection";
@@ -15,6 +15,10 @@ type CalcParams = {
     stdDev: number;
     mean: number;
     mean0: number;
+};
+
+type PlotDataPoint = {
+    [key: string]: number | null;
 };
 
 type ValidationErrors = {
@@ -36,7 +40,7 @@ export default function OneSampleNormalPage() {
         mean: 2,
         mean0: 1.5,
     });
-    const [plotData, setPlotData] = useState<any[]>([]);
+    const [plotData, setPlotData] = useState<PlotDataPoint[]>([]);
     const [xAxisVar, setXAxisVar] = useState<string>("mean"); // TODO: 가장 처음 나오는 값을 기본 x축 변수로 설정하세요.
     const [xAxisMin, setXAxisMin] = useState<number>(0); // 고정
     const [xAxisMax, setXAxisMax] = useState<number>(0); // 고정
@@ -50,15 +54,15 @@ export default function OneSampleNormalPage() {
             setXAxisMin(Math.max(0.1, stdDev * 0.5));
             setXAxisMax(stdDev * 1.5);
         } else if (xAxisVar === 'mean') {
-            const range = Math.abs(mean * 0.5) || 1;
-            setXAxisMin(mean - range);
-            setXAxisMax(mean + range);
+            const delta = Math.abs(mean - mean0);
+            setXAxisMin(mean - delta * 0.5);
+            setXAxisMax(mean + delta * 0.5);
         } else if (xAxisVar === 'mean0') {
-            const range = Math.abs(mean0 * 0.5) || 1;
-            setXAxisMin(mean0 - range);
-            setXAxisMax(mean0 + range);
+            const delta = Math.abs(mean - mean0);
+            setXAxisMin(mean0 - delta * 0.5);
+            setXAxisMax(mean0 + delta * 0.5);
         }
-    }, [xAxisVar, params.stdDev, params.mean, params.mean0]);
+    }, [xAxisVar, params]);
 
     const validate = () => {
         const newErrors: ValidationErrors = {};
@@ -79,7 +83,7 @@ export default function OneSampleNormalPage() {
         return Object.keys(newErrors).length === 0;
     };
 
-    const updatePlotData = () => {
+    const updatePlotData = useCallback(() => {
         const { alpha, power } = params;
         const data = [];
 
@@ -113,7 +117,7 @@ export default function OneSampleNormalPage() {
 
         for (let i = 0; i < 100; i++) {
             const x = xAxisMin + (xAxisMax - xAxisMin) * (i / 99);
-            let point: any = { [xAxisVar]: x };
+            const point: PlotDataPoint = { [xAxisVar]: x };
             
             powerScenarios.forEach(scenario => {
                 let sampleSize: number | null = null;
@@ -143,7 +147,7 @@ export default function OneSampleNormalPage() {
             data.push(point);
         }
         setPlotData(data);
-    };
+    }, [params, xAxisMin, xAxisMax, xAxisVar]);
 
     const handleCalculate = () => {
         if (!validate()) return;
@@ -184,9 +188,9 @@ export default function OneSampleNormalPage() {
     // 바꾸지 말 것
     useEffect(() => {
         updatePlotData();
-    }, [xAxisVar, xAxisMin, xAxisMax]);
+    }, [updatePlotData]);
 
-    const handleParamsChange = (newParams: { [key: string]: any }) => {
+    const handleParamsChange = (newParams: { [key: string]: string | number | null }) => {
         setParams(prevParams => ({ ...prevParams, ...newParams }));
     };
 

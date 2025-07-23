@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { jStat } from "jstat";
 import { CalculatorInputArea } from "@/components/calculator/CalculatorInputArea";
 import { PlotSection } from "@/components/calculator/PlotSection";
@@ -18,6 +18,10 @@ type CalcParams = {
     stdDevB: number;
     kappa: number;
     tau: number;
+};
+
+type PlotDataPoint = {
+    [key: string]: number | null;
 };
 
 type ValidationErrors = {
@@ -45,7 +49,7 @@ export default function OneWayAnovaPairwise1Sided() {
         kappa: 2,
         tau: 1,
     });
-    const [plotData, setPlotData] = useState<any[]>([]);
+    const [plotData, setPlotData] = useState<PlotDataPoint[]>([]);
     const [xAxisVar, setXAxisVar] = useState<string>("meanA"); // TODO: 기본 x축 변수를 설정하세요.
     const [xAxisMin, setXAxisMin] = useState<number>(0); // Default
     const [xAxisMax, setXAxisMax] = useState<number>(0); // Default
@@ -74,7 +78,7 @@ export default function OneWayAnovaPairwise1Sided() {
             setXAxisMin(Math.max(1, tau * 0.5));
             setXAxisMax(tau * 1.5);
         }
-    }, [xAxisVar, params.meanB, params.stdDevA, params.stdDevB, params.kappa, params.tau]);
+    }, [xAxisVar, params]);
 
     const validate = () => {
         const newErrors: ValidationErrors = {};
@@ -95,7 +99,7 @@ export default function OneWayAnovaPairwise1Sided() {
         return Object.keys(newErrors).length === 0;
     };
 
-    const updatePlotData = () => {
+    const updatePlotData = useCallback(() => {
         const { alpha, power, meanA, meanB, stdDevA, stdDevB, kappa, tau } = params;
         const data = [];
 
@@ -125,7 +129,7 @@ export default function OneWayAnovaPairwise1Sided() {
 
         for (let i = 0; i < 100; i++) {
             const x = xAxisMin + (xAxisMax - xAxisMin) * (i / 99);
-            let point: any = { [xAxisVar]: x };
+            const point: PlotDataPoint = { [xAxisVar]: x };
             
             powerScenarios.forEach(scenario => {
                 let sampleSize: number | null = null;
@@ -159,7 +163,7 @@ export default function OneWayAnovaPairwise1Sided() {
             data.push(point);
         }
         setPlotData(data);
-    };
+    }, [params, xAxisMin, xAxisMax, xAxisVar]);
 
     const handleCalculate = () => {
         if (!validate()) return;
@@ -199,9 +203,9 @@ export default function OneWayAnovaPairwise1Sided() {
 
     useEffect(() => {
         updatePlotData();
-    }, [xAxisVar, xAxisMin, xAxisMax, params.alpha]);
+    }, [updatePlotData]);
 
-    const handleParamsChange = (newParams: { [key: string]: any }) => {
+    const handleParamsChange = (newParams: { [key: string]: string | number | null }) => {
         setParams(prevParams => ({ ...prevParams, ...newParams }));
     };
 

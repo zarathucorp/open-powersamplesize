@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { jStat } from "jstat";
 import { CalculatorInputArea } from "@/components/calculator/CalculatorInputArea";
 import { PlotSection } from "@/components/calculator/PlotSection";
@@ -15,6 +15,10 @@ type CalcParams = {
     nullHypothesisMean: number;
     delta: number;
     stdDev: number;
+};
+
+type PlotDataPoint = {
+    [key: string]: number | null;
 };
 
 type ValidationErrors = {
@@ -33,7 +37,7 @@ export default function Test1MeanEquivalencePage() {
         delta: 0.05,
         stdDev: 0.10,
     });
-    const [plotData, setPlotData] = useState<any[]>([]);
+    const [plotData, setPlotData] = useState<PlotDataPoint[]>([]);
     const [xAxisVar, setXAxisVar] = useState<string>("mean");
     const [xAxisMin, setXAxisMin] = useState<number>(0);
     const [xAxisMax, setXAxisMax] = useState<number>(0);
@@ -42,20 +46,23 @@ export default function Test1MeanEquivalencePage() {
     const [errors, setErrors] = useState<ValidationErrors>({});
 
     useEffect(() => {
-        if (xAxisVar === 'mean') {
-            setXAxisMin(Math.max(0.1, params.mean - 2));
-            setXAxisMax(params.mean + 2);
-        } else if (xAxisVar === 'nullHypothesisMean') {
-            setXAxisMin(Math.max(0.1, params.nullHypothesisMean - 2));
-            setXAxisMax(params.nullHypothesisMean + 2);
-        } else if (xAxisVar === 'stdDev') {
-            setXAxisMin(Math.max(0.1, params.stdDev * 0.5));
-            setXAxisMax(params.stdDev * 1.5);
+        const { stdDev, delta, mean, nullHypothesisMean } = params;
+        if (xAxisVar === 'stdDev') {
+            setXAxisMin(Math.max(0.1, stdDev * 0.5));
+            setXAxisMax(stdDev * 1.5);
         } else if (xAxisVar === 'delta') {
-            setXAxisMin(Math.max(0.1, params.delta - 0.01));
-            setXAxisMax(params.delta + 0.01);
+            setXAxisMin(Math.max(0.1, delta * 0.5));
+            setXAxisMax(delta * 1.5);
+        } else if (xAxisVar === 'mean') {
+            const diff = Math.abs(mean - nullHypothesisMean);
+            setXAxisMin(mean - diff * 1.5);
+            setXAxisMax(mean + diff * 1.5);
+        } else if (xAxisVar === 'nullHypothesisMean') {
+            const diff = Math.abs(mean - nullHypothesisMean);
+            setXAxisMin(nullHypothesisMean - diff * 1.5);
+            setXAxisMax(nullHypothesisMean + diff * 1.5);
         }
-    }, [xAxisVar]);
+    }, [xAxisVar, params]);
 
     const validate = () => {
         const newErrors: ValidationErrors = {};
@@ -74,7 +81,7 @@ export default function Test1MeanEquivalencePage() {
         return Object.keys(newErrors).length === 0;
     }
 
-    const updatePlotData = () => {
+    const updatePlotData = useCallback(() => {
         const { alpha, power, mean, nullHypothesisMean, stdDev, delta } = params;
         const mu = mean;
         const mu0 = nullHypothesisMean;
@@ -106,7 +113,7 @@ export default function Test1MeanEquivalencePage() {
 
         for (let i = 0; i < 100; i++) {
             const x = xAxisMin + (xAxisMax - xAxisMin) * (i / 99);
-            let point: any = { [xAxisVar]: x };
+            const point: PlotDataPoint = { [xAxisVar]: x };
             
             powerScenarios.forEach(scenario => {
                 const z_alpha = jStat.normal.inv(1 - alpha, 0, 1);
@@ -135,7 +142,7 @@ export default function Test1MeanEquivalencePage() {
             data.push(point);
         }
         setPlotData(data);
-    };
+    }, [params, xAxisMin, xAxisMax, xAxisVar]);
 
     const handleCalculate = () => {
         if (!validate()) return;
@@ -172,9 +179,9 @@ export default function Test1MeanEquivalencePage() {
 
     useEffect(() => {
         updatePlotData();
-    }, [xAxisVar, xAxisMin, xAxisMax]);
+    }, [updatePlotData]);
 
-    const handleParamsChange = (newParams: { [key: string]: any }) => {
+    const handleParamsChange = (newParams: { [key: string]: string | number | null }) => {
         setParams(prevParams => ({ ...prevParams, ...newParams }));
     };
 

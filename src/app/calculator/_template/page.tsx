@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { jStat } from "jstat";
+import { useState, useEffect, useCallback } from "react";
+// import { jStat } from "jstat";
 import { CalculatorInputArea } from "@/components/calculator/CalculatorInputArea";
 import { PlotSection } from "@/components/calculator/PlotSection";
 import { DescriptionSection } from "@/components/calculator/DescriptionSection";
@@ -13,6 +13,10 @@ type CalcParams = {
     power: string | null;
     sampleSize: number | null;
     // 여기에 다른 파라미터를 추가하세요.
+};
+
+type PlotDataPoint = {
+    [key: string]: number | null;
 };
 
 type ValidationErrors = {
@@ -30,7 +34,7 @@ export default function CalculatorPageTemplate() {
         alpha: 0.05,
         // 여기에 다른 파라미터의 초기값을 설정하세요.
     });
-    const [plotData, setPlotData] = useState<any[]>([]);
+    const [plotData, setPlotData] = useState<PlotDataPoint[]>([]);
     const [xAxisVar, setXAxisVar] = useState<string>(""); // TODO: 가장 처음 나오는 값을 기본 x축 변수로 설정하세요.
     const [xAxisMin, setXAxisMin] = useState<number>(0); // 고정
     const [xAxisMax, setXAxisMax] = useState<number>(0); // 고정
@@ -63,12 +67,12 @@ export default function CalculatorPageTemplate() {
         return Object.keys(newErrors).length === 0;
     };
 
-    const updatePlotData = () => {
+    const updatePlotData = useCallback(() => {
         // TODO: 플롯 데이터를 생성하도록 이 함수를 업데이트하세요.
-        const { alpha, power, ...otherParams } = params;
+        // const { alpha } = params;
         const data = [];
 
-        const powerValue = power ? parseFloat(power) : null;
+        const powerValue = params.power ? parseFloat(params.power) : null;
         const powerScenarios: { name: string, value: number }[] = [];
         const colors = ['#8884d8', '#82ca9d', '#ffc658'];
         const newColors: { [key: string]: string } = {};
@@ -94,14 +98,14 @@ export default function CalculatorPageTemplate() {
         setYAxisVars(powerScenarios.map(s => s.name));
         setLineColors(newColors);
 
-        const z_alpha = jStat.normal.inv(1 - alpha, 0, 1);
+        // const z_alpha = jStat.normal.inv(1 - alpha, 0, 1);
 
         for (let i = 0; i < 100; i++) {
             const x = xAxisMin + (xAxisMax - xAxisMin) * (i / 99);
-            let point: any = { [xAxisVar]: x };
+            const point: PlotDataPoint = { [xAxisVar]: x };
             
             powerScenarios.forEach(scenario => {
-                let sampleSize: number | null = null;
+                const sampleSize: number | null = null;
                 
                 // TODO: x축 변수와 power 시나리오에 따라 표본 크기 계산을 구현하세요.
                 // 원본 파일과 유사한 구조를 사용하여 다른 x축 변수를 처리하세요.
@@ -121,12 +125,12 @@ export default function CalculatorPageTemplate() {
             data.push(point);
         }
         setPlotData(data);
-    };
+    }, [params, xAxisMin, xAxisMax, xAxisVar]);
 
     const handleCalculate = () => {
         if (!validate()) return;
 
-        const { alpha, power, sampleSize, ...otherParams } = params;
+        const { power } = params;
         
         if (solveFor === 'power') {
             // TODO: Power 계산을 구현하세요.
@@ -142,14 +146,14 @@ export default function CalculatorPageTemplate() {
         } else { // solveFor === 'sampleSize'
             const powerValue = power ? parseFloat(power) : null;
             // TODO: 표본 크기 계산을 구현하세요.
-            // if (powerValue && powerValue > 0 && powerValue < 1) {
-            //     const calculatedSize = ... 여기에 수식을 입력하세요 ...
-            //     if (params.sampleSize !== calculatedSize) {
-            //         setParams(p => ({ ...p, sampleSize: Math.ceil(calculatedSize) }));
-            //     }
-            // } else {
-            //     setParams(p => ({...p, sampleSize: null}));
-            // }
+            if (powerValue && powerValue > 0 && powerValue < 1) {
+                //     const calculatedSize = ... 여기에 수식을 입력하세요 ...
+                //     if (params.sampleSize !== calculatedSize) {
+                //         setParams(p => ({ ...p, sampleSize: Math.ceil(calculatedSize) }));
+                //     }
+            } else {
+                setParams(p => ({...p, sampleSize: null}));
+            }
         }
         updatePlotData();
     };
@@ -157,9 +161,9 @@ export default function CalculatorPageTemplate() {
     // 바꾸지 말 것
     useEffect(() => {
         updatePlotData();
-    }, [xAxisVar, xAxisMin, xAxisMax]);
+    }, [updatePlotData]);
 
-    const handleParamsChange = (newParams: { [key: string]: any }) => {
+    const handleParamsChange = (newParams: { [key: string]: string | number | null }) => {
         setParams(prevParams => ({ ...prevParams, ...newParams }));
     };
 

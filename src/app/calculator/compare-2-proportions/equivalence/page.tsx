@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { jStat } from "jstat";
 import { CalculatorInputArea } from "@/components/calculator/CalculatorInputArea";
 import { PlotSection } from "@/components/calculator/PlotSection";
@@ -17,12 +17,40 @@ type CalcParams = {
     kappa: number;
 };
 
+type PlotDataPoint = {
+    [key: string]: number | null;
+};
+
 type ValidationErrors = {
     power?: string;
     pA?: string;
     pB?: string;
     delta?: string;
     kappa?: string;
+};
+
+const calculateSampleSize = (power: number, pA: number, pB: number, delta: number, kappa: number, alpha: number): number | null => {
+    if (delta <= Math.abs(pA - pB) || pA <= 0 || pA >= 1 || pB <= 0 || pB >= 1 || kappa <= 0 || power <= 0 || power >= 1) return null;
+    const z_alpha = jStat.normal.inv(1 - alpha, 0, 1);
+    const z_beta_half = jStat.normal.inv(1 - power / 2, 0, 1);
+    const term1 = (pA * (1 - pA) / kappa) + (pB * (1 - pB));
+    const term2_num = z_alpha + z_beta_half;
+    const term2_den = Math.abs(pA - pB) - delta;
+    if (term2_den === 0) return null;
+    const nB = term1 * Math.pow(term2_num / term2_den, 2);
+    return Math.ceil(nB);
+};
+
+const calculatePower = (nB: number, pA: number, pB: number, delta: number, kappa: number, alpha: number): number | null => {
+    if (nB <= 0 || pA <= 0 || pA >= 1 || pB <= 0 || pB >= 1 || kappa <= 0) return null;
+    const nA = kappa * nB;
+    const z_num = Math.abs(pA - pB) - delta;
+    const z_den = Math.sqrt((pA * (1 - pA) / nA) + (pB * (1 - pB) / nB));
+    if (z_den === 0) return null;
+    const z = z_num / z_den;
+    const z_alpha = jStat.normal.inv(1 - alpha, 0, 1);
+    const power = jStat.normal.cdf(z - z_alpha, 0, 1) + jStat.normal.cdf(-z - z_alpha, 0, 1);
+    return power;
 };
 
 // TODO: 계산기 페이지에 맞게 컴포넌트 이름을 변경하세요.
@@ -38,7 +66,7 @@ export default function Compare2ProportionsEquivalence() {
         delta: 0.05,
         kappa: 1,
     });
-    const [plotData, setPlotData] = useState<any[]>([]);
+    const [plotData, setPlotData] = useState<PlotDataPoint[]>([]);
     const [xAxisVar, setXAxisVar] = useState<string>("pA"); // TODO: 가장 처음 나오는 값을 기본 x축 변수로 설정하세요.
     const [xAxisMin, setXAxisMin] = useState<number>(0); // 고정
     const [xAxisMax, setXAxisMax] = useState<number>(0); // 고정
@@ -71,39 +99,11 @@ export default function Compare2ProportionsEquivalence() {
         return Object.keys(newErrors).length === 0;
     };
 
-    const calculateSampleSize = (power: number, pA: number, pB: number, delta: number, kappa: number, alpha: number): number | null => {
-        if (delta <= Math.abs(pA - pB) || pA <= 0 || pA >= 1 || pB <= 0 || pB >= 1 || kappa <= 0 || power <= 0 || power >= 1) return null;
-        const z_alpha = jStat.normal.inv(1 - alpha, 0, 1);
-        const z_beta_half = jStat.normal.inv(1 - power / 2, 0, 1);
-        const term1 = (pA * (1 - pA) / kappa) + (pB * (1 - pB));
-        const term2_num = z_alpha + z_beta_half;
-        const term2_den = Math.abs(pA - pB) - delta;
-        if (term2_den === 0) return null;
-        const nB = term1 * Math.pow(term2_num / term2_den, 2);
-        return Math.ceil(nB);
-    };
-
-    const calculatePower = (nB: number, pA: number, pB: number, delta: number, kappa: number, alpha: number): number | null => {
-        if (nB <= 0 || pA <= 0 || pA >= 1 || pB <= 0 || pB >= 1 || kappa <= 0) return null;
-        const nA = kappa * nB;
-        const z_num = Math.abs(pA - pB) - delta;
-        const z_den = Math.sqrt((pA * (1 - pA) / nA) + (pB * (1 - pB) / nB));
-        if (z_den === 0) return null;
-        const z = z_num / z_den;
-        const z_alpha = jStat.normal.inv(1 - alpha, 0, 1);
-        const power = jStat.normal.cdf(z - z_alpha, 0, 1) + jStat.normal.cdf(-z - z_alpha, 0, 1);
-        return power;
-    };
-
-    const updatePlotData = () => {
-        const { alpha, power, pA, pB, delta, kappa } = params;
-        if (!validate()) {
-            setPlotData([]);
-            return;
-        };
+    const updatePlotData = useCallback(() => {
+        const { alpha, pA, pB, delta, kappa } = params;
 
         const data = [];
-        const powerValue = power ? parseFloat(power) : null;
+        const powerValue = params.power ? parseFloat(params.power) : null;
         const powerScenarios: { name: string, value: number }[] = [];
         const colors = ['#8884d8', '#82ca9d', '#ffc658'];
         const newColors: { [key: string]: string } = {};
@@ -128,7 +128,7 @@ export default function Compare2ProportionsEquivalence() {
 
         for (let i = 0; i < 100; i++) {
             const x = xAxisMin + (xAxisMax - xAxisMin) * (i / 99);
-            let point: any = { [xAxisVar]: x };
+            const point: PlotDataPoint = { [xAxisVar]: x };
             
             powerScenarios.forEach(scenario => {
                 let currentPA = pA, currentPB = pB, currentDelta = delta, currentKappa = kappa;
@@ -143,7 +143,7 @@ export default function Compare2ProportionsEquivalence() {
             data.push(point);
         }
         setPlotData(data);
-    };
+    }, [params, xAxisMin, xAxisMax, xAxisVar]);
 
     const handleCalculate = () => {
         if (!validate()) return;
@@ -173,14 +173,12 @@ export default function Compare2ProportionsEquivalence() {
                 setParams(p => ({...p, sampleSize: null}));
             }
         }
+        updatePlotData();
     };
 
     useEffect(() => {
-        if (validate()) {
-            updatePlotData();
-        }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [params, xAxisVar, xAxisMin, xAxisMax]);
+        updatePlotData();
+    }, [updatePlotData]);
 
     useEffect(() => {
         const { pA, pB, delta, kappa } = params;
@@ -198,10 +196,9 @@ export default function Compare2ProportionsEquivalence() {
             setXAxisMin(Math.max(0.1, kappa * 0.5));
             setXAxisMax(kappa * 1.5);
         }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [xAxisVar]);
+    }, [xAxisVar, params]);
 
-    const handleParamsChange = (newParams: { [key: string]: any }) => {
+    const handleParamsChange = (newParams: { [key: string]: string | number | null }) => {
         setParams(prevParams => ({ ...prevParams, ...newParams }));
     };
 

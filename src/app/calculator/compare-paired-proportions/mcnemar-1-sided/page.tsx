@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { jStat } from "jstat";
 import { CalculatorInputArea } from "@/components/calculator/CalculatorInputArea";
 import { PlotSection } from "@/components/calculator/PlotSection";
@@ -13,6 +13,10 @@ type CalcParams = {
     sampleSize: number | null;
     p10: number;
     p01: number;
+};
+
+type PlotDataPoint = {
+    [key: string]: number | null;
 };
 
 type ValidationErrors = {
@@ -30,7 +34,7 @@ export default function McNemar1SidedPage() {
         p10: 0.05,
         p01: 0.45,
     });
-    const [plotData, setPlotData] = useState<any[]>([]);
+    const [plotData, setPlotData] = useState<PlotDataPoint[]>([]);
     const [xAxisVar, setXAxisVar] = useState<string>("p01");
     const [xAxisMin, setXAxisMin] = useState<number>(0);
     const [xAxisMax, setXAxisMax] = useState<number>(0);
@@ -47,7 +51,7 @@ export default function McNemar1SidedPage() {
             setXAxisMin(Math.max(0.001, p01 * 0.5));
             setXAxisMax(Math.min(0.999, p01 * 1.5));
         }
-    }, [xAxisVar, params.p10, params.p01]);
+    }, [xAxisVar, params]);
 
     const validate = () => {
         const newErrors: ValidationErrors = {};
@@ -72,7 +76,7 @@ export default function McNemar1SidedPage() {
         return Object.keys(newErrors).length === 0;
     };
 
-    const updatePlotData = () => {
+    const updatePlotData = useCallback(() => {
         const { alpha, power, p10, p01 } = params;
         const data = [];
 
@@ -103,7 +107,7 @@ export default function McNemar1SidedPage() {
 
         for (let i = 0; i < 100; i++) {
             const x = xAxisMin + (xAxisMax - xAxisMin) * (i / 99);
-            let point: any = { [xAxisVar]: x };
+            const point: PlotDataPoint = { [xAxisVar]: x };
             
             powerScenarios.forEach(scenario => {
                 let sampleSize: number | null = null;
@@ -135,7 +139,7 @@ export default function McNemar1SidedPage() {
             data.push(point);
         }
         setPlotData(data);
-    };
+    }, [params, xAxisMin, xAxisMax, xAxisVar]);
 
     const handleCalculate = () => {
         if (!validate()) return;
@@ -192,9 +196,9 @@ export default function McNemar1SidedPage() {
 
     useEffect(() => {
         updatePlotData();
-    }, [xAxisVar, xAxisMin, xAxisMax]);
+    }, [updatePlotData]);
 
-    const handleParamsChange = (newParams: { [key: string]: any }) => {
+    const handleParamsChange = (newParams: { [key: string]: string | number | null }) => {
         setParams(prevParams => ({ ...prevParams, ...newParams }));
     };
 

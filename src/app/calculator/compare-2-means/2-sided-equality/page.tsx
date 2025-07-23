@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { jStat } from "jstat";
 import { CalculatorInputArea } from "@/components/calculator/CalculatorInputArea";
 import { PlotSection } from "@/components/calculator/PlotSection";
@@ -20,6 +20,10 @@ type CalcParams = {
     kappa: number;
 };
 
+type PlotDataPoint = {
+    [key: string]: number | null;
+};
+
 type ValidationErrors = {
     power?: string;
 };
@@ -36,7 +40,7 @@ export default function Compare2Means2SidedEqualityPage() {
         stdDev: 10,
         kappa: 1,
     });
-    const [plotData, setPlotData] = useState<any[]>([]);
+    const [plotData, setPlotData] = useState<PlotDataPoint[]>([]);
     const [xAxisVar, setXAxisVar] = useState<string>("meanA");
     const [xAxisMin, setXAxisMin] = useState<number>(4);
     const [xAxisMax, setXAxisMax] = useState<number>(6);
@@ -53,7 +57,7 @@ export default function Compare2Means2SidedEqualityPage() {
         } else {
              setParams(p => ({ ...p, sampleSizeA: null }));
         }
-    }, [params.sampleSizeB, params.kappa]);
+    }, [params.sampleSizeB, params.kappa, params.sampleSizeA]);
 
     useEffect(() => {
         if (xAxisVar === 'meanA') {
@@ -83,7 +87,7 @@ export default function Compare2Means2SidedEqualityPage() {
         return Object.keys(newErrors).length === 0;
     }
 
-    const updatePlotData = () => {
+    const updatePlotData = useCallback(() => {
         const { alpha, power, meanA, meanB, stdDev, kappa } = params;
         const data = [];
         
@@ -98,7 +102,7 @@ export default function Compare2Means2SidedEqualityPage() {
         }
 
         [0.9, 0.7].forEach(val => {
-            if (!powerScenarios.some(s => s.value === val)) {
+            if (powerScenarios.length < 3 && !powerScenarios.some(s => s.value === val)) {
                 powerScenarios.push({ name: `${(val * 100).toFixed(2)}%`, value: val });
             }
         });
@@ -112,7 +116,7 @@ export default function Compare2Means2SidedEqualityPage() {
 
         for (let i = 0; i < 100; i++) {
             const x = xAxisMin + (xAxisMax - xAxisMin) * (i / 99);
-            let point: any = { [xAxisVar]: x };
+            const point: PlotDataPoint = { [xAxisVar]: x };
             
             powerScenarios.forEach(scenario => {
                 let nB: number | null = null;
@@ -143,12 +147,12 @@ export default function Compare2Means2SidedEqualityPage() {
             data.push(point);
         }
         setPlotData(data);
-    };
+    }, [params, xAxisMin, xAxisMax, xAxisVar]);
 
     const handleCalculate = () => {
         if (!validate()) return;
 
-        const { alpha, power, sampleSizeA, sampleSizeB, meanA, meanB, stdDev, kappa } = params;
+        const { alpha, power, sampleSizeB, meanA, meanB, stdDev, kappa } = params;
         
         if (solveFor === 'power') {
             if (sampleSizeB && sampleSizeB > 0 && kappa > 0) {
@@ -187,9 +191,9 @@ export default function Compare2Means2SidedEqualityPage() {
 
     useEffect(() => {
         updatePlotData();
-    }, [xAxisVar, xAxisMin, xAxisMax]);
+    }, [updatePlotData]);
 
-    const handleParamsChange = (newParams: { [key: string]: any }) => {
+    const handleParamsChange = (newParams: { [key: string]: string | number | null }) => {
         setParams(prevParams => ({ ...prevParams, ...newParams }));
     };
 

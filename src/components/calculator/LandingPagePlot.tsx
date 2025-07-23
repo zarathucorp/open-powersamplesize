@@ -5,6 +5,10 @@ import { jStat } from "jstat";
 import { PlotSection } from "@/components/calculator/PlotSection";
 import { Card, CardContent } from "@/components/ui/card";
 
+interface PlotPoint {
+    [key: string]: number | null;
+}
+
 export function LandingPagePlot() {
     const [params] = useState({
         alpha: 0.05,
@@ -13,7 +17,7 @@ export function LandingPagePlot() {
         nullHypothesisMean: 1.5,
         stdDev: 1,
     });
-    const [plotData, setPlotData] = useState<any[]>([]);
+    const [plotData, setPlotData] = useState<PlotPoint[]>([]);
     const [xAxisVar] = useState<string>("mean");
     const [xAxisMin, setXAxisMin] = useState<number>(0);
     const [xAxisMax, setXAxisMax] = useState<number>(0);
@@ -64,7 +68,7 @@ export function LandingPagePlot() {
 
             for (let i = 0; i < 100; i++) {
                 const x = xAxisMin + (xAxisMax - xAxisMin) * (i / 99);
-                let point: any = { [xAxisVar]: x };
+                const point: PlotPoint = { [xAxisVar]: x };
                 
                 powerScenarios.forEach(scenario => {
                     if (x !== mu0) {

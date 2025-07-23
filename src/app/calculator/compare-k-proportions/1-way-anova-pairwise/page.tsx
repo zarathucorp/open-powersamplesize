@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { jStat } from "jstat";
 import { CalculatorInputArea } from "@/components/calculator/CalculatorInputArea";
 import { PlotSection } from "@/components/calculator/PlotSection";
@@ -14,6 +14,10 @@ type CalcParams = {
     pA: number;
     pB: number;
     tau: number;
+};
+
+type PlotDataPoint = {
+    [key: string]: number | null;
 };
 
 type ValidationErrors = {
@@ -33,7 +37,7 @@ export default function CompareKProportions1WayAnovaPairwise() {
         pB: 0.4,
         tau: 2,
     });
-    const [plotData, setPlotData] = useState<any[]>([]);
+    const [plotData, setPlotData] = useState<PlotDataPoint[]>([]);
     const [xAxisVar, setXAxisVar] = useState<string>("pA");
     const [xAxisMin, setXAxisMin] = useState<number>(0);
     const [xAxisMax, setXAxisMax] = useState<number>(0);
@@ -51,7 +55,7 @@ export default function CompareKProportions1WayAnovaPairwise() {
             setXAxisMin(1);
             setXAxisMax(Math.max(10, tau * 2));
         }
-    }, [xAxisVar, params.pA, params.pB, params.tau]);
+    }, [xAxisVar, params]);
 
     const validate = () => {
         const newErrors: ValidationErrors = {};
@@ -79,7 +83,7 @@ export default function CompareKProportions1WayAnovaPairwise() {
         return Object.keys(newErrors).length === 0;
     };
 
-    const updatePlotData = () => {
+    const updatePlotData = useCallback(() => {
         const { alpha, power, pA, pB, tau } = params;
         const data = [];
 
@@ -118,7 +122,7 @@ export default function CompareKProportions1WayAnovaPairwise() {
 
         for (let i = 0; i < 100; i++) {
             const x = xAxisMin + (xAxisMax - xAxisMin) * (i / 99);
-            let point: any = { [xAxisVar]: x };
+            const point: PlotDataPoint = { [xAxisVar]: x };
             
             powerScenarios.forEach(scenario => {
                 let sampleSize: number | null = null;
@@ -141,7 +145,7 @@ export default function CompareKProportions1WayAnovaPairwise() {
             data.push(point);
         }
         setPlotData(data);
-    };
+    }, [params, xAxisMin, xAxisMax, xAxisVar]);
 
     const handleCalculate = () => {
         if (!validate()) return;
@@ -183,9 +187,9 @@ export default function CompareKProportions1WayAnovaPairwise() {
 
     useEffect(() => {
         updatePlotData();
-    }, [xAxisVar, xAxisMin, xAxisMax]);
+    }, [updatePlotData]);
 
-    const handleParamsChange = (newParams: { [key: string]: any }) => {
+    const handleParamsChange = (newParams: { [key: string]: string | number | null }) => {
         setParams(prevParams => ({ ...prevParams, ...newParams }));
     };
 
@@ -261,7 +265,7 @@ $H_1: p_A \\ne p_B$
 where $p_A$ and $p_B$ represent the proportions in two of the $k$ groups, groups 'A' and 'B'. We'll compute the required sample size for each of the $\\tau$ comparisons, and total sample size needed is the largest of these. In the formula below, $n$ represents the sample size in any one of these $\\tau$ comparisons; that is, there are $n/2$ people in the 'A' group, and $n/2$ people in the 'B' group.`}
                     formulas={`This calculator uses the following formulas to compute sample size and power, respectively:
 
-$n = \\left(p_A(1-p_A) + p_B(1-p_B)\\right) \\left(\\frac{z_{1-\\alpha/(2\\tau)} + z_{1-\\beta}}{p_A - p_B}\\right)^2$
+$n = \\left(p_A(1-p_A) + p_B(1-pB)\\right) \\left(\\frac{z_{1-\\alpha/(2\\tau)} + z_{1-\\beta}}{p_A - pB}\\right)^2$
 
 $1-\\beta = \\Phi\\left(z - z_{1-\\alpha/(2\\tau)}\\right) + \\Phi\\left(-z - z_{1-\\alpha/(2\\tau)}\\right)$
 

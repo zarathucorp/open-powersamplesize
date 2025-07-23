@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { jStat } from "jstat";
 import { CalculatorInputArea } from "@/components/calculator/CalculatorInputArea";
 import { PlotSection } from "@/components/calculator/PlotSection";
@@ -15,6 +15,10 @@ type CalcParams = {
     muB: number;
     stdDev: number;
     tau: number;
+};
+
+type PlotDataPoint = {
+    [key: string]: number | null;
 };
 
 type ValidationErrors = {
@@ -35,7 +39,7 @@ export default function CompareKMeansAnovaPairwise2SidedEquality() {
         stdDev: 10,
         tau: 1,
     });
-    const [plotData, setPlotData] = useState<any[]>([]);
+    const [plotData, setPlotData] = useState<PlotDataPoint[]>([]);
     const [xAxisVar, setXAxisVar] = useState<string>("muA");
     const [xAxisMin, setXAxisMin] = useState<number>(0);
     const [xAxisMax, setXAxisMax] = useState<number>(0);
@@ -63,7 +67,7 @@ export default function CompareKMeansAnovaPairwise2SidedEquality() {
             setXAxisMin(1);
             setXAxisMax(Math.max(10, tau * 2));
         }
-    }, [xAxisVar, params.muA, params.muB, params.stdDev, params.tau]);
+    }, [xAxisVar, params]);
 
     const validate = () => {
         const newErrors: ValidationErrors = {};
@@ -86,7 +90,7 @@ export default function CompareKMeansAnovaPairwise2SidedEquality() {
         return Object.keys(newErrors).length === 0;
     };
 
-    const updatePlotData = () => {
+    const updatePlotData = useCallback(() => {
         const { alpha, power, muA, muB, stdDev, tau } = params;
         const data = [];
 
@@ -116,7 +120,7 @@ export default function CompareKMeansAnovaPairwise2SidedEquality() {
 
         for (let i = 0; i < 100; i++) {
             const x = xAxisMin + (xAxisMax - xAxisMin) * (i / 99);
-            let point: any = { [xAxisVar]: x };
+            const point: PlotDataPoint = { [xAxisVar]: x };
             
             powerScenarios.forEach(scenario => {
                 let sampleSize: number | null = null;
@@ -125,16 +129,16 @@ export default function CompareKMeansAnovaPairwise2SidedEquality() {
                 let n: number | null = null;
 
                 if (xAxisVar === 'muA') {
-                    const muA = x;
-                    if (muA !== muB) {
+                    const muA_x = x;
+                    if (muA_x !== muB) {
                         const z1 = jStat.normal.inv(1 - alpha / (2 * tau), 0, 1);
-                        n = 2 * Math.pow(stdDev * (z1 + z2) / Math.abs(muA - muB), 2);
+                        n = 2 * Math.pow(stdDev * (z1 + z2) / Math.abs(muA_x - muB), 2);
                     }
                 } else if (xAxisVar === 'muB') {
-                    const muB = x;
-                    if (muA !== muB) {
+                    const muB_x = x;
+                    if (muA !== muB_x) {
                         const z1 = jStat.normal.inv(1 - alpha / (2 * tau), 0, 1);
-                        n = 2 * Math.pow(stdDev * (z1 + z2) / Math.abs(muA - muB), 2);
+                        n = 2 * Math.pow(stdDev * (z1 + z2) / Math.abs(muA - muB_x), 2);
                     }
                 } else if (xAxisVar === 'delta') {
                     const delta = x;
@@ -165,7 +169,7 @@ export default function CompareKMeansAnovaPairwise2SidedEquality() {
             data.push(point);
         }
         setPlotData(data);
-    };
+    }, [params, xAxisMin, xAxisMax, xAxisVar]);
 
     const handleCalculate = () => {
         if (!validate()) return;
@@ -204,9 +208,9 @@ export default function CompareKMeansAnovaPairwise2SidedEquality() {
 
     useEffect(() => {
         updatePlotData();
-    }, [params, xAxisVar, xAxisMin, xAxisMax]);
+    }, [updatePlotData]);
 
-    const handleParamsChange = (newParams: { [key: string]: any }) => {
+    const handleParamsChange = (newParams: { [key: string]: string | number | null }) => {
         setParams(prevParams => ({ ...prevParams, ...newParams }));
     };
 

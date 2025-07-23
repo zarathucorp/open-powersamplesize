@@ -1,13 +1,15 @@
 import type { NextConfig } from "next";
 
+const isProd = process.env.NODE_ENV === "production";
+
 const repo = "open-powersamplesize";
-const assetPrefix = `/${repo}/`;
-const basePath = `/${repo}`;
 
 const nextConfig: NextConfig = {
 	output: "export",
-	assetPrefix: assetPrefix,
-	basePath: basePath,
+	...(isProd && {
+		assetPrefix: `/${repo}/`,
+		basePath: `/${repo}`,
+	}),
 };
 
 export default nextConfig;

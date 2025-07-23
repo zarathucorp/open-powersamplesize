@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { jStat } from "jstat";
 import { CalculatorInputArea } from "@/components/calculator/CalculatorInputArea";
 import { PlotSection } from "@/components/calculator/PlotSection";
@@ -15,6 +15,10 @@ type CalcParams = {
     // 여기에 다른 파라미터를 추가하세요.
     p: number;
     p0: number;
+};
+
+type PlotDataPoint = {
+    [key: string]: number | null;
 };
 
 type ValidationErrors = {
@@ -37,7 +41,7 @@ export default function OneSampleBinomialPage() {
         p: 0.5,
         p0: 0.3,
     });
-    const [plotData, setPlotData] = useState<any[]>([]);
+    const [plotData, setPlotData] = useState<PlotDataPoint[]>([]);
     const [xAxisVar, setXAxisVar] = useState<string>("p"); // TODO: 가장 처음 나오는 값을 기본 x축 변수로 설정하세요.
     const [xAxisMin, setXAxisMin] = useState<number>(0); // 고정
     const [xAxisMax, setXAxisMax] = useState<number>(0); // 고정
@@ -46,16 +50,15 @@ export default function OneSampleBinomialPage() {
     const [errors, setErrors] = useState<ValidationErrors>({});
 
     useEffect(() => {
-        // TODO: 파라미터에 따라 x축 범위를 설정하는 로직을 적당히 조정하세요.
-        const { p, p0 } = params;
-        if (xAxisVar === 'p') {
-            setXAxisMin(Math.max(0.01, p * 0.5));
-            setXAxisMax(Math.min(0.99, p * 1.5));
+        const { p0 } = params;
+        if (xAxisVar === 'p1') {
+            setXAxisMin(0.01);
+            setXAxisMax(0.99);
         } else if (xAxisVar === 'p0') {
             setXAxisMin(Math.max(0.01, p0 * 0.5));
             setXAxisMax(Math.min(0.99, p0 * 1.5));
         }
-    }, [xAxisVar, params.p, params.p0]);
+    }, [xAxisVar, params]);
 
     const validate = () => {
         const newErrors: ValidationErrors = {};
@@ -83,7 +86,7 @@ export default function OneSampleBinomialPage() {
         return Object.keys(newErrors).length === 0;
     };
 
-    const updatePlotData = () => {
+    const updatePlotData = useCallback(() => {
         // TODO: 플롯 데이터를 생성하도록 이 함수를 업데이트하세요.
         const { alpha, power, p, p0 } = params;
         const data = [];
@@ -118,7 +121,7 @@ export default function OneSampleBinomialPage() {
 
         for (let i = 0; i < 100; i++) {
             const x = xAxisMin + (xAxisMax - xAxisMin) * (i / 99);
-            let point: any = { [xAxisVar]: x };
+            const point: PlotDataPoint = { [xAxisVar]: x };
             
             powerScenarios.forEach(scenario => {
                 let sampleSize: number | null = null;
@@ -147,7 +150,7 @@ export default function OneSampleBinomialPage() {
             data.push(point);
         }
         setPlotData(data);
-    };
+    }, [params, xAxisMin, xAxisMax, xAxisVar]);
 
     const handleCalculate = () => {
         if (!validate()) return;
@@ -189,9 +192,9 @@ export default function OneSampleBinomialPage() {
     // 바꾸지 말 것
     useEffect(() => {
         updatePlotData();
-    }, [xAxisVar, xAxisMin, xAxisMax]);
+    }, [updatePlotData]);
 
-    const handleParamsChange = (newParams: { [key: string]: any }) => {
+    const handleParamsChange = (newParams: { [key: string]: string | number | null }) => {
         setParams(prevParams => ({ ...prevParams, ...newParams }));
     };
 

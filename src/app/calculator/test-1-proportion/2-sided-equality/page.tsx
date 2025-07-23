@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { jStat } from "jstat";
 import { CalculatorInputArea } from "@/components/calculator/CalculatorInputArea";
 import { PlotSection } from "@/components/calculator/PlotSection";
@@ -15,6 +15,10 @@ type CalcParams = {
     // 여기에 다른 파라미터를 추가하세요.
     p: number;
     p0: number;
+};
+
+type PlotDataPoint = {
+    [key: string]: number | null;
 };
 
 type ValidationErrors = {
@@ -36,7 +40,7 @@ export default function Test1Proportion2SidedEquality() {
         p: 0.5,
         p0: 0.3,
     });
-    const [plotData, setPlotData] = useState<any[]>([]);
+    const [plotData, setPlotData] = useState<PlotDataPoint[]>([]);
     const [xAxisVar, setXAxisVar] = useState<string>("p"); // TODO: 기본 x축 변수를 설정하세요.
     const [xAxisMin, setXAxisMin] = useState<number>(0); // Default
     const [xAxisMax, setXAxisMax] = useState<number>(0); // Default
@@ -45,7 +49,6 @@ export default function Test1Proportion2SidedEquality() {
     const [errors, setErrors] = useState<ValidationErrors>({});
 
     useEffect(() => {
-        // TODO: 파라미터에 따라 x축 범위를 설정하는 로직을 적당히 조정하세요.
         const { p, p0 } = params;
         if (xAxisVar === 'p') {
             setXAxisMin(Math.max(0.01, p * 0.5));
@@ -54,7 +57,7 @@ export default function Test1Proportion2SidedEquality() {
             setXAxisMin(Math.max(0.01, p0 * 0.5));
             setXAxisMax(Math.min(0.99, p0 * 1.5));
         }
-    }, [xAxisVar, params.p, params.p0]);
+    }, [xAxisVar, params]);
 
     const validate = () => {
         const newErrors: ValidationErrors = {};
@@ -80,7 +83,7 @@ export default function Test1Proportion2SidedEquality() {
         return Object.keys(newErrors).length === 0;
     };
 
-    const updatePlotData = () => {
+    const updatePlotData = useCallback(() => {
         // TODO: 플롯 데이터를 생성하도록 이 함수를 업데이트하세요.
         const { alpha, power, p, p0 } = params;
         const data = [];
@@ -113,7 +116,7 @@ export default function Test1Proportion2SidedEquality() {
 
         for (let i = 0; i < 100; i++) {
             const x = xAxisMin + (xAxisMax - xAxisMin) * (i / 99);
-            let point: any = { [xAxisVar]: x };
+            const point: PlotDataPoint = { [xAxisVar]: x };
             
             powerScenarios.forEach(scenario => {
                 let sampleSize: number | null = null;
@@ -141,7 +144,7 @@ export default function Test1Proportion2SidedEquality() {
             data.push(point);
         }
         setPlotData(data);
-    };
+    }, [params, xAxisMin, xAxisMax, xAxisVar]);
 
     const handleCalculate = () => {
         if (!validate()) return;
@@ -173,21 +176,22 @@ export default function Test1Proportion2SidedEquality() {
                 setParams(p => ({...p, sampleSize: null}));
             }
         }
+        updatePlotData();
     };
 
     useEffect(() => {
         updatePlotData();
-    }, [params, xAxisVar, xAxisMin, xAxisMax]);
+    }, [updatePlotData]);
 
-    const handleParamsChange = (newParams: { [key: string]: any }) => {
+    const handleParamsChange = (newParams: { [key: string]: string | number | null }) => {
         setParams((prevParams: CalcParams) => ({ ...prevParams, ...newParams }));
     };
 
     // TODO: 계산기의 입력 필드를 정의하세요.
     const inputFields = [
         // 필수 입력 필드
-        { name: 'power', label: 'Power (1-β)', type: 'text' as const, solve: 'power' },
-        { name: 'sampleSize', label: 'Sample Size (n)', type: 'number' as const, solve: 'sampleSize' },
+        { name: 'power', label: 'Power (1-β)', type: 'text' as const, solve: 'power' as const },
+        { name: 'sampleSize', label: 'Sample Size (n)', type: 'number' as const, solve: 'sampleSize' as const },
         { name: 'alpha', label: 'Alpha (α)', type: 'number' as const },
         // 여기에 다른 입력 필드를 추가하세요.
         { name: 'p', label: 'Proportion (p)', type: 'number' as const },

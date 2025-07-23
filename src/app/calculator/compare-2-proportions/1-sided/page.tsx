@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { jStat } from "jstat";
 import { CalculatorInputArea } from "@/components/calculator/CalculatorInputArea";
 import { PlotSection } from "@/components/calculator/PlotSection";
@@ -16,11 +16,36 @@ type CalcParams = {
     kappa: number;
 };
 
+type PlotDataPoint = {
+    [key: string]: number | null;
+};
+
 type ValidationErrors = {
     power?: string;
     pA?: string;
     pB?: string;
     kappa?: string;
+};
+
+const calculateSampleSize = (power: number, pA: number, pB: number, kappa: number, alpha: number): number | null => {
+    if (pA <= 0 || pA >= 1 || pB <= 0 || pB >= 1 || pA === pB || kappa <= 0 || power <= 0 || power >= 1) return null;
+    const z_alpha = jStat.normal.inv(1 - alpha, 0, 1);
+    const z_beta = jStat.normal.inv(power, 0, 1);
+    const term1 = (pA * (1 - pA) / kappa) + (pB * (1 - pB));
+    const term2 = Math.pow((z_alpha + z_beta) / (pA - pB), 2);
+    const nB = term1 * term2;
+    return Math.ceil(nB);
+};
+
+const calculatePower = (nB: number, pA: number, pB: number, kappa: number, alpha: number): number | null => {
+    if (nB <= 0 || pA <= 0 || pA >= 1 || pB <= 0 || pB >= 1 || kappa <= 0) return null;
+    const nA = kappa * nB;
+    const z_alpha = jStat.normal.inv(1 - alpha, 0, 1);
+    const numerator = Math.abs(pA - pB);
+    const denominator = Math.sqrt((pA * (1 - pA) / nA) + (pB * (1 - pB) / nB));
+    if (denominator === 0) return null;
+    const power = jStat.normal.cdf(numerator / denominator - z_alpha, 0, 1);
+    return power;
 };
 
 export default function Compare2Proportions1Sided() {
@@ -33,24 +58,13 @@ export default function Compare2Proportions1Sided() {
         pB: 0.85,
         kappa: 1,
     });
-    const [plotData, setPlotData] = useState<any[]>([]);
+    const [plotData, setPlotData] = useState<PlotDataPoint[]>([]);
     const [xAxisVar, setXAxisVar] = useState<string>("pA");
     const [xAxisMin, setXAxisMin] = useState<number>(0);
     const [xAxisMax, setXAxisMax] = useState<number>(0);
     const [yAxisVars, setYAxisVars] = useState<string[]>([]);
     const [lineColors, setLineColors] = useState<{ [key: string]: string }>({});
     const [errors, setErrors] = useState<ValidationErrors>({});
-
-    useEffect(() => {
-        const { pA, pB, kappa } = params;
-        if (xAxisVar === 'pA' || xAxisVar === 'pB') {
-            setXAxisMin(0.01);
-            setXAxisMax(0.99);
-        } else if (xAxisVar === 'kappa') {
-            setXAxisMin(Math.max(0.1, kappa * 0.5));
-            setXAxisMax(kappa * 1.5);
-        }
-    }, [xAxisVar, params.pA, params.pB, params.kappa]);
 
     const validate = () => {
         const newErrors: ValidationErrors = {};
@@ -77,11 +91,11 @@ export default function Compare2Proportions1Sided() {
         return Object.keys(newErrors).length === 0;
     };
 
-    const updatePlotData = () => {
-        const { alpha, power, pA, pB, kappa } = params;
+    const updatePlotData = useCallback(() => {
+        const { alpha, pA, pB, kappa } = params;
         const data = [];
 
-        const powerValue = power ? parseFloat(power) : null;
+        const powerValue = params.power ? parseFloat(params.power) : null;
         const powerScenarios: { name: string, value: number }[] = [];
         const colors = ['#8884d8', '#82ca9d', '#ffc658'];
         const newColors: { [key: string]: string } = {};
@@ -104,15 +118,11 @@ export default function Compare2Proportions1Sided() {
         setYAxisVars(powerScenarios.map(s => s.name));
         setLineColors(newColors);
 
-        const z_alpha = jStat.normal.inv(1 - alpha, 0, 1);
-
         for (let i = 0; i < 100; i++) {
             const x = xAxisMin + (xAxisMax - xAxisMin) * (i / 99);
-            let point: any = { [xAxisVar]: x };
+            const point: PlotDataPoint = { [xAxisVar]: x };
             
             powerScenarios.forEach(scenario => {
-                let sampleSize: number | null = null;
-                
                 let currentPA = pA;
                 let currentPB = pB;
                 let currentKappa = kappa;
@@ -120,25 +130,14 @@ export default function Compare2Proportions1Sided() {
                 if (xAxisVar === 'pA') currentPA = x;
                 if (xAxisVar === 'pB') currentPB = x;
                 if (xAxisVar === 'kappa') currentKappa = x;
-
-                if (currentPA <= 0 || currentPA >= 1 || currentPB <= 0 || currentPB >= 1 || currentPA === currentPB || currentKappa <= 0) {
-                    point[scenario.name] = null;
-                    return;
-                }
                 
-                const z_beta = jStat.normal.inv(scenario.value, 0, 1);
-                const term1 = (currentPA * (1 - currentPA) / currentKappa) + (currentPB * (1 - currentPB));
-                const term2 = Math.pow((z_alpha + z_beta) / (currentPA - currentPB), 2);
-                const calculatedN = term1 * term2;
-                
-                sampleSize = Math.ceil(calculatedN);
-
+                const sampleSize = calculateSampleSize(scenario.value, currentPA, currentPB, currentKappa, alpha);
                 point[scenario.name] = sampleSize && sampleSize > 0 ? sampleSize : null;
             });
             data.push(point);
         }
         setPlotData(data);
-    };
+    }, [params, xAxisMin, xAxisMax, xAxisVar]);
 
     const handleCalculate = () => {
         if (!validate()) return;
@@ -147,15 +146,12 @@ export default function Compare2Proportions1Sided() {
         
         if (solveFor === 'power') {
             if (sampleSize && sampleSize > 0) {
-                const nB = sampleSize;
-                const nA = kappa * nB;
-                const z_alpha = jStat.normal.inv(1 - alpha, 0, 1);
-                const numerator = Math.abs(pA - pB);
-                const denominator = Math.sqrt((pA * (1 - pA) / nA) + (pB * (1 - pB) / nB));
-                const calculatedPower = jStat.normal.cdf(numerator / denominator - z_alpha, 0, 1);
-                const formattedPower = calculatedPower.toFixed(4);
-                if (params.power !== formattedPower) {
-                    setParams(p => ({ ...p, power: formattedPower }));
+                const calculatedPower = calculatePower(sampleSize, pA, pB, kappa, alpha);
+                if (calculatedPower) {
+                    const formattedPower = calculatedPower.toFixed(4);
+                    if (params.power !== formattedPower) {
+                        setParams(p => ({ ...p, power: formattedPower }));
+                    }
                 }
             } else {
                 setParams(p => ({...p, power: null}));
@@ -163,14 +159,9 @@ export default function Compare2Proportions1Sided() {
         } else { // solveFor === 'sampleSize'
             const powerValue = power ? parseFloat(power) : null;
             if (powerValue && powerValue > 0 && powerValue < 1) {
-                const z_alpha = jStat.normal.inv(1 - alpha, 0, 1);
-                const z_beta = jStat.normal.inv(powerValue, 0, 1);
-                const term1 = (pA * (1 - pA) / kappa) + (pB * (1 - pB));
-                const term2 = Math.pow((z_alpha + z_beta) / (pA - pB), 2);
-                const calculatedSize = term1 * term2;
-                const finalSize = Math.ceil(calculatedSize);
-                if (params.sampleSize !== finalSize) {
-                    setParams(p => ({ ...p, sampleSize: finalSize }));
+                const calculatedSize = calculateSampleSize(powerValue, pA, pB, kappa, alpha);
+                if (calculatedSize && params.sampleSize !== calculatedSize) {
+                    setParams(p => ({ ...p, sampleSize: calculatedSize }));
                 }
             } else {
                 setParams(p => ({...p, sampleSize: null}));
@@ -181,9 +172,23 @@ export default function Compare2Proportions1Sided() {
 
     useEffect(() => {
         updatePlotData();
-    }, [xAxisVar, xAxisMin, xAxisMax]);
+    }, [updatePlotData]);
 
-    const handleParamsChange = (newParams: { [key: string]: any }) => {
+    useEffect(() => {
+        const { pA, pB, kappa } = params;
+        if (xAxisVar === 'pA') {
+            setXAxisMin(Math.max(0.01, pA * 0.5));
+            setXAxisMax(Math.min(0.99, pA * 1.5));
+        } else if (xAxisVar === 'pB') {
+            setXAxisMin(Math.max(0.01, pB * 0.5));
+            setXAxisMax(Math.min(0.99, pB * 1.5));
+        } else if (xAxisVar === 'kappa') {
+            setXAxisMin(Math.max(0.1, kappa * 0.5));
+            setXAxisMax(kappa * 1.5);
+        }
+    }, [xAxisVar, params]);
+
+    const handleParamsChange = (newParams: { [key: string]: string | number | null }) => {
         setParams(prevParams => ({ ...prevParams, ...newParams }));
     };
 

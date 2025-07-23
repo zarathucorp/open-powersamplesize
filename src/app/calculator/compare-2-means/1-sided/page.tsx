@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { jStat } from "jstat";
 import { CalculatorInputArea } from "@/components/calculator/CalculatorInputArea";
 import { PlotSection } from "@/components/calculator/PlotSection";
@@ -16,6 +16,10 @@ type CalcParams = {
     stdDevA: number;
     stdDevB: number;
     kappa: number;
+};
+
+type PlotDataPoint = {
+    [key: string]: number | null;
 };
 
 type ValidationErrors = {
@@ -35,7 +39,7 @@ export default function Compare2Means1SidedPage() {
         stdDevB: 18.23,
         kappa: 2,
     });
-    const [plotData, setPlotData] = useState<any[]>([]);
+    const [plotData, setPlotData] = useState<PlotDataPoint[]>([]);
     const [xAxisVar, setXAxisVar] = useState<string>("meanA");
     const [xAxisMin, setXAxisMin] = useState<number>(130);
     const [xAxisMax, setXAxisMax] = useState<number>(135);
@@ -80,7 +84,7 @@ export default function Compare2Means1SidedPage() {
         return Object.keys(newErrors).length === 0;
     }
 
-    const updatePlotData = () => {
+    const updatePlotData = useCallback(() => {
         const { alpha, power, meanA, meanB, stdDevA, stdDevB, kappa } = params;
         const data = [];
         const effectSize = meanA - meanB;
@@ -101,7 +105,7 @@ export default function Compare2Means1SidedPage() {
         }
 
         [0.9, 0.7].forEach(val => {
-            if (!powerScenarios.some(s => s.value === val)) {
+            if (powerScenarios.length < 3 && !powerScenarios.some(s => s.value === val)) {
                 powerScenarios.push({ name: `${(val * 100).toFixed(2)}%`, value: val });
             }
         });
@@ -115,7 +119,7 @@ export default function Compare2Means1SidedPage() {
 
         for (let i = 0; i < 100; i++) {
             const x = xAxisMin + (xAxisMax - xAxisMin) * (i / 99);
-            let point: any = { [xAxisVar]: x };
+            const point: PlotDataPoint = { [xAxisVar]: x };
             
             powerScenarios.forEach(scenario => {
                 let nA: number | null = null;
@@ -153,7 +157,7 @@ export default function Compare2Means1SidedPage() {
             data.push(point);
         }
         setPlotData(data);
-    };
+    }, [params, xAxisMin, xAxisMax, xAxisVar, solveFor]);
 
     const handleCalculate = () => {
         if (!validate()) return;
@@ -191,9 +195,9 @@ export default function Compare2Means1SidedPage() {
 
     useEffect(() => {
         updatePlotData();
-    }, [xAxisVar, xAxisMin, xAxisMax]);
+    }, [updatePlotData]);
 
-    const handleParamsChange = (newParams: { [key: string]: any }) => {
+    const handleParamsChange = (newParams: { [key: string]: string | number | null }) => {
         setParams(prevParams => ({ ...prevParams, ...newParams }));
     };
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { jStat } from "jstat";
 import { CalculatorInputArea } from "@/components/calculator/CalculatorInputArea";
 import { PlotSection } from "@/components/calculator/PlotSection";
@@ -14,6 +14,10 @@ type CalcParams = {
     sampleSize: number | null;
     rho: number | null;
     r: number | null;
+};
+
+type PlotDataPoint = {
+    [key: string]: number | null;
 };
 
 type ValidationErrors = {
@@ -33,7 +37,7 @@ export default function SccsAlt2Calculator() {
         rho: 3,
         r: 0.115,
     });
-    const [plotData, setPlotData] = useState<any[]>([]);
+    const [plotData, setPlotData] = useState<PlotDataPoint[]>([]);
     const [xAxisVar, setXAxisVar] = useState<string>("rho"); // 가장 처음 나오는 값을 기본 x축 변수로 설정하세요.
     const [xAxisMin, setXAxisMin] = useState<number>(0); // 고정
     const [xAxisMax, setXAxisMax] = useState<number>(0); // 고정
@@ -42,18 +46,19 @@ export default function SccsAlt2Calculator() {
     const [errors, setErrors] = useState<ValidationErrors>({});
 
     useEffect(() => {
-        // 파라미터에 따라 x축 범위를 설정하는 로직을 적당히 조정하세요.
         const { rho, r } = params;
         if (xAxisVar === 'rho') {
-            const val = rho ?? 3;
-            setXAxisMin(Math.max(1.01, val * 0.5));
-            setXAxisMax(val * 1.5);
+            if (rho) {
+                setXAxisMin(Math.max(0.1, rho * 0.5));
+                setXAxisMax(rho * 1.5);
+            }
         } else if (xAxisVar === 'r') {
-            const val = r ?? 0.115;
-            setXAxisMin(Math.max(0.01, val * 0.5));
-            setXAxisMax(Math.min(0.99, val * 1.5));
+            if (r) {
+                setXAxisMin(Math.max(0.01, r * 0.5));
+                setXAxisMax(Math.min(0.99, r * 1.5));
+            }
         }
-    }, [xAxisVar]);
+    }, [xAxisVar, params]);
 
     const validate = () => {
         const newErrors: ValidationErrors = {};
@@ -75,7 +80,7 @@ export default function SccsAlt2Calculator() {
         return Object.keys(newErrors).length === 0;
     };
 
-    const updatePlotData = () => {
+    const updatePlotData = useCallback(() => {
         // 플롯 데이터를 생성하도록 이 함수를 업데이트하세요.
         const { alpha, power, rho, r } = params;
         const data = [];
@@ -110,7 +115,7 @@ export default function SccsAlt2Calculator() {
 
         for (let i = 0; i < 100; i++) {
             const x = xAxisMin + (xAxisMax - xAxisMin) * (i / 99);
-            let point: any = { [xAxisVar]: x };
+            const point: PlotDataPoint = { [xAxisVar]: x };
             
             powerScenarios.forEach(scenario => {
                 let sampleSize: number | null = null;
@@ -145,7 +150,7 @@ export default function SccsAlt2Calculator() {
             data.push(point);
         }
         setPlotData(data);
-    };
+    }, [params, xAxisMin, xAxisMax, xAxisVar]);
 
     const handleCalculate = () => {
         if (!validate()) return;
@@ -193,9 +198,9 @@ export default function SccsAlt2Calculator() {
     // 바꾸지 말 것
     useEffect(() => {
         updatePlotData();
-    }, [xAxisVar, xAxisMin, xAxisMax]);
+    }, [updatePlotData]);
 
-    const handleParamsChange = (newParams: { [key: string]: any }) => {
+    const handleParamsChange = (newParams: { [key: string]: string | number | null }) => {
         setParams(prevParams => ({ ...prevParams, ...newParams }));
     };
 

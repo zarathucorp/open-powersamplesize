@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { jStat } from "jstat";
 import { CalculatorInputArea } from "@/components/calculator/CalculatorInputArea";
 import { PlotSection } from "@/components/calculator/PlotSection";
@@ -14,6 +14,10 @@ type CalcParams = {
     p: number;
     p0: number;
     delta: number;
+};
+
+type PlotDataPoint = {
+    [key: string]: number | null;
 };
 
 type ValidationErrors = {
@@ -33,7 +37,7 @@ export default function Test1ProportionNonInferioritySuperiority() {
         p0: 0.3,
         delta: -0.1,
     });
-    const [plotData, setPlotData] = useState<any[]>([]);
+    const [plotData, setPlotData] = useState<PlotDataPoint[]>([]);
     const [xAxisVar, setXAxisVar] = useState<string>("delta");
     const [xAxisMin, setXAxisMin] = useState<number>(0);
     const [xAxisMax, setXAxisMax] = useState<number>(0);
@@ -50,10 +54,10 @@ export default function Test1ProportionNonInferioritySuperiority() {
             setXAxisMin(Math.max(0.01, p0 * 0.5));
             setXAxisMax(Math.min(0.99, p0 * 1.5));
         } else if (xAxisVar === 'delta') {
-            setXAxisMin(delta - 0.2);
-            setXAxisMax(delta + 0.2);
+            setXAxisMin(Math.max(0.01, delta * 0.5));
+            setXAxisMax(Math.min(0.99, delta * 1.5));
         }
-    }, [xAxisVar, params.p, params.p0, params.delta]);
+    }, [xAxisVar, params]);
 
     const validate = () => {
         const newErrors: ValidationErrors = {};
@@ -79,7 +83,7 @@ export default function Test1ProportionNonInferioritySuperiority() {
         return Object.keys(newErrors).length === 0;
     };
 
-    const updatePlotData = () => {
+    const updatePlotData = useCallback(() => {
         const { alpha, power, p, p0, delta } = params;
         const data = [];
 
@@ -110,7 +114,7 @@ export default function Test1ProportionNonInferioritySuperiority() {
 
         for (let i = 0; i < 100; i++) {
             const x = xAxisMin + (xAxisMax - xAxisMin) * (i / 99);
-            let point: any = { [xAxisVar]: x };
+            const point: PlotDataPoint = { [xAxisVar]: x };
             
             powerScenarios.forEach(scenario => {
                 let sampleSize: number | null = null;
@@ -138,7 +142,7 @@ export default function Test1ProportionNonInferioritySuperiority() {
             data.push(point);
         }
         setPlotData(data);
-    };
+    }, [params, xAxisMin, xAxisMax, xAxisVar]);
 
     const handleCalculate = () => {
         if (!validate()) return;
@@ -177,15 +181,15 @@ export default function Test1ProportionNonInferioritySuperiority() {
 
     useEffect(() => {
         updatePlotData();
-    }, [xAxisVar, xAxisMin, xAxisMax]);
+    }, [updatePlotData]);
 
-    const handleParamsChange = (newParams: { [key: string]: any }) => {
+    const handleParamsChange = (newParams: { [key: string]: string | number | null }) => {
         setParams(prevParams => ({ ...prevParams, ...newParams }));
     };
 
     const inputFields = [
-        { name: 'power', label: 'Power (1-β)', type: 'text' as const, solve: 'power' },
-        { name: 'sampleSize', label: 'Sample Size (n)', type: 'number' as const, solve: 'sampleSize' },
+        { name: 'power', label: 'Power (1-β)', type: 'text' as const, solve: 'power' as const },
+        { name: 'sampleSize', label: 'Sample Size (n)', type: 'number' as const, solve: 'sampleSize' as const },
         { name: 'alpha', label: 'Alpha (α)', type: 'number' as const },
         { name: 'p', label: 'Proportion (p)', type: 'number' as const },
         { name: 'p0', label: 'Comparison Proportion (p0)', type: 'number' as const },
@@ -248,7 +252,7 @@ $H_1:p-p_0>\\delta$
 
 and $\\delta$ is the superiority or non-inferiority margin.`}
                     formulas={`This calculator uses the following formulas to compute sample size and power, respectively: $$n=p(1-p)\\left(\\frac{z_{1-\\alpha}+z_{1-\\beta}}{p-p_0-\\delta}\\right)^2$$
-$$1-\\beta= \\Phi\\left(z-z_{1-\\alpha}\\right)+\\Phi\\left(-z-z_{1-\\alpha}\\right) \\quad ,\\quad z=\\frac{p-p_0-\\delta}{\\sqrt{\\frac{p(1-p)}{n}}}$$ where
+$1-\\beta= \\Phi\\left(z-z_{1-\\alpha}\\right)+\\Phi\\left(-z-z_{1-\\alpha}\\right) \\quad ,\\quad z=\\frac{p-p_0-\\delta}{\\sqrt{\\frac{p(1-p)}{n}}}$$ where
 
 $n$ is sample size
 $p_0$ is the comparison value
