@@ -22,7 +22,7 @@ export default function Home() {
 
         <div className="text-center mb-16">
           <Button asChild size="lg">
-            <Link href="/calculator">Get Started</Link>
+            <Link href="/calculator/test-1-mean/2-sided-equality"><strong>Get Started</strong></Link>
           </Button>
         </div>
 
