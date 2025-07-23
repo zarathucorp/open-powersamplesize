@@ -70,16 +70,6 @@ export function Navbar() {
                 </Link>
               </NavigationMenuLink>
             </NavigationMenuItem>
-            <NavigationMenuItem>
-              <NavigationMenuLink
-                asChild
-              >
-                <Link href={`${basePath}/LICENSE`} target="_blank" rel="noopener noreferrer" className="flex items-center">
-                  <Scale className="w-6 h-6" />
-                  {/* MIT License */}
-                </Link>
-              </NavigationMenuLink>
-            </NavigationMenuItem>
           </NavigationMenuList>
         </NavigationMenu>
       </div>

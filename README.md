@@ -1,6 +1,6 @@
 # Open Power Samplesize
 
-[![Deploy to GitHub Pages](https://github.com/koolerjaebee/open-powersamplesize/actions/workflows/deploy.yml/badge.svg)](https://github.com/koolerjaebee/open-powersamplesize/actions/workflows/deploy.yml)
+[![Deploy to GitHub Pages](https://github.com/zarathucorp/open-powersamplesize/actions/workflows/deploy.yml/badge.svg)](https://github.com/zarathucorp/open-powersamplesize/actions/workflows/deploy.yml)
 
 *Open Power Samplesize* is a free, open-source web application designed to help researchers and students perform power and sample size calculations for various statistical tests. Our goal is to provide an intuitive and accessible tool for study design.
 

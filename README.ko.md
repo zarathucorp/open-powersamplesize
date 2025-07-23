@@ -1,6 +1,6 @@
 # Open Power Samplesize
 
-[![Deploy to GitHub Pages](https://github.com/koolerjaebee/open-powersamplesize/actions/workflows/deploy.yml/badge.svg)](https://github.com/koolerjaebee/open-powersamplesize/actions/workflows/deploy.yml)
+[![Deploy to GitHub Pages](https://github.com/zarathucorp/open-powersamplesize/actions/workflows/deploy.yml/badge.svg)](https://github.com/zarathucorp/open-powersamplesize/actions/workflows/deploy.yml)
 
 *Open Power Samplesize*는 연구자와 학생들이 다양한 통계 검정에 대한 검정력 및 표본 크기 계산을 수행할 수 있도록 설계된 무료 오픈소스 웹 애플리케이션입니다. 저희 목표는 연구 설계를 위한 직관적이고 접근하기 쉬운 도구를 제공하는 것입니다.
 
