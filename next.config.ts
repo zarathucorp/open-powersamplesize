@@ -7,7 +7,6 @@ const repo = "open-powersamplesize";
 const nextConfig: NextConfig = {
 	output: "export",
 	...(isProd && {
-		assetPrefix: `/${repo}/`,
 		basePath: `/${repo}`,
 	}),
 };
