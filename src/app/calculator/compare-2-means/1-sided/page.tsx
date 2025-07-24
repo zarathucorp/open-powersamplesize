@@ -203,13 +203,13 @@ export default function Compare2Means1SidedPage() {
 
     const inputFields = [
         { name: 'power', label: 'Power (1-β)', type: 'text' as const, solve: 'power' as const },
-        { name: 'sampleSizeA', label: 'Sample Size (nA)', type: 'number' as const, solve: 'sampleSize' as const },
-        { name: 'alpha', label: 'Alpha (α)', type: 'number' as const, step: 0.01 },
-        { name: 'meanA', label: 'Group A Mean (μA)', type: 'number' as const },
-        { name: 'meanB', label: 'Group B Mean (μB)', type: 'number' as const },
-        { name: 'stdDevA', label: 'Group A SD (σA)', type: 'number' as const },
-        { name: 'stdDevB', label: 'Group B SD (σB)', type: 'number' as const },
-        { name: 'kappa', label: 'Ratio (κ=nB/nA)', type: 'number' as const, step: 0.1 },
+        { name: 'sampleSizeA', label: 'Sample Size (n_A)', type: 'number' as const, solve: 'sampleSize' as const },
+        { name: 'alpha', label: 'Type I error rate (α)', type: 'number' as const, step: 0.01 },
+        { name: 'meanA', label: 'Group A mean (μ_A)', type: 'number' as const },
+        { name: 'meanB', label: 'Group B mean (μ_B)', type: 'number' as const },
+        { name: 'stdDevA', label: 'Group A Standard Deviation (σ_A)', type: 'number' as const },
+        { name: 'stdDevB', label: 'Group B Standard Deviation (σ_B)', type: 'number' as const },
+        { name: 'kappa', label: 'Sampling Ratio (κ=n_B/n_A)', type: 'number' as const, step: 0.1 },
     ];
 
     const xAxisOptions = inputFields

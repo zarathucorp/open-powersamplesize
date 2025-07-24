@@ -217,12 +217,12 @@ export default function Compare2ProportionsEquivalence() {
     const inputFields = [
         // 필수 입력 필드
         { name: 'power', label: 'Power (1-β)', type: 'text' as const, solve: 'power' as const },
-        { name: 'sampleSize', label: 'Sample Size, Group B (nB)', type: 'number' as const, solve: 'sampleSize' as const },
-        { name: 'alpha', label: 'Alpha (α)', type: 'number' as const, step: 0.01 },
-        { name: 'pA', label: 'Proportion, Group A (pA)', type: 'number' as const, step: 0.01 },
-        { name: 'pB', label: 'Proportion, Group B (pB)', type: 'number' as const, step: 0.01 },
-        { name: 'delta', label: 'Margin of Equivalence (δ)', type: 'number' as const, step: 0.01 },
-        { name: 'kappa', label: 'Ratio (κ=nA/nB)', type: 'number' as const, step: 0.1 },
+        { name: 'sampleSize', label: 'Sample Size (n_B)', type: 'number' as const, solve: 'sampleSize' as const },
+        { name: 'alpha', label: 'Type I error rate (α)', type: 'number' as const, step: 0.01 },
+        { name: 'pA', label: 'Group A Proportion (p_A)', type: 'number' as const, step: 0.01 },
+        { name: 'pB', label: 'Group B Proportion (p_B)', type: 'number' as const, step: 0.01 },
+        { name: 'delta', label: 'Non-inferiority or Superiority Margin (δ)', type: 'number' as const, step: 0.01 },
+        { name: 'kappa', label: 'Sampling Ratio (κ=n_A/n_B)', type: 'number' as const, step: 0.1 },
     ];
 
     const xAxisOptions = inputFields

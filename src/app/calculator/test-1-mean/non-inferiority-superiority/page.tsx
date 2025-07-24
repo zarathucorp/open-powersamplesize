@@ -194,7 +194,7 @@ export default function Test1MeanNonInferioritySuperiorityPage() {
     const inputFields = [
         { name: 'power', label: 'Power (1-β)', type: 'text' as const, solve: 'power' as const },
         { name: 'sampleSize', label: 'Sample Size (n)', type: 'number' as const, solve: 'sampleSize' as const },
-        { name: 'alpha', label: 'Alpha (α)', type: 'number' as const },
+        { name: 'alpha', label: 'Type I error rate (α)', type: 'number' as const },
         { name: 'mean', label: 'True mean (μ)', type: 'number' as const },
         { name: 'nullHypothesisMean', label: 'Null Hypothesis mean (μ₀)', type: 'number' as const },
         { name: 'delta', label: 'Non-inferiority or Superiority Margin (δ)', type: 'number' as const },

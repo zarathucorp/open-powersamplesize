@@ -200,13 +200,11 @@ export default function OneSampleBinomialPage() {
 
     // TODO: 계산기의 입력 필드를 정의하세요.
     const inputFields = [
-        // 필수 입력 필드
         { name: 'power', label: 'Power (1-β)', type: 'text' as const, solve: 'power' as const },
         { name: 'sampleSize', label: 'Sample Size (n)', type: 'number' as const, solve: 'sampleSize' as const },
-        { name: 'alpha', label: 'Alpha (α)', type: 'number' as const },
-        // 여기에 다른 입력 필드를 추가하세요.
-        { name: 'p', label: 'Proportion (p)', type: 'number' as const },
-        { name: 'p0', label: 'Comparison Proportion (p0)', type: 'number' as const },
+        { name: 'alpha', label: 'Type I error rate (α)', type: 'number' as const },
+        { name: 'p', label: 'True Proportion (p)', type: 'number' as const },
+        { name: 'p0', label: 'Null Hypothesis Proportion (p_0)', type: 'number' as const },
     ];
 
     const xAxisOptions = inputFields

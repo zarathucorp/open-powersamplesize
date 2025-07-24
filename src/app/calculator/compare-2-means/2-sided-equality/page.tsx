@@ -199,12 +199,12 @@ export default function Compare2Means2SidedEqualityPage() {
 
     const inputFields = [
         { name: 'power', label: 'Power (1-β)', type: 'text' as const, solve: 'power' as const },
-        { name: 'sampleSizeB', label: 'Sample Size (Group B, n_B)', type: 'number' as const, solve: 'sampleSize' as const },
-        { name: 'alpha', label: 'Alpha (α)', type: 'number' as const },
-        { name: 'meanA', label: 'Mean (Group A, μ_A)', type: 'number' as const },
-        { name: 'meanB', label: 'Mean (Group B, μ_B)', type: 'number' as const },
+        { name: 'sampleSizeB', label: 'Sample Size (n_B)', type: 'number' as const, solve: 'sampleSize' as const },
+        { name: 'alpha', label: 'Type I error rate (α)', type: 'number' as const },
+        { name: 'meanA', label: 'Group A mean (μ_A)', type: 'number' as const },
+        { name: 'meanB', label: 'Group B mean (μ_B)', type: 'number' as const },
         { name: 'stdDev', label: 'Standard Deviation (σ)', type: 'number' as const },
-        { name: 'kappa', label: 'Allocation Ratio (κ=n_A/n_B)', type: 'number' as const },
+        { name: 'kappa', label: 'Sampling Ratio (κ=n_A/n_B)', type: 'number' as const },
     ];
 
     const xAxisOptions = inputFields

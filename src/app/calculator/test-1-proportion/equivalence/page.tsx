@@ -209,11 +209,11 @@ export default function Test1ProportionEquivalence() {
 
     const inputFields = [
         { name: 'power', label: 'Power (1-β)', type: 'text' as const, solve: 'power' as const },
+        { name: 'alpha', label: 'Type I error rate (α)', type: 'number' as const },
         { name: 'sampleSize', label: 'Sample Size (n)', type: 'number' as const, solve: 'sampleSize' as const },
-        { name: 'p', label: 'Proportion (p)', type: 'number' as const },
-        { name: 'p0', label: 'Comparison Proportion (p0)', type: 'number' as const },
-        { name: 'delta', label: 'Margin of Equivalence (δ)', type: 'number' as const },
-        { name: 'alpha', label: 'Alpha (α)', type: 'number' as const },
+        { name: 'p', label: 'True Proportion (p)', type: 'number' as const },
+        { name: 'p0', label: 'Null Hypothesis Proportion (p0)', type: 'number' as const },
+        { name: 'delta', label: 'Non-inferiority or Superiority Margin (δ)', type: 'number' as const },
     ];
 
     const xAxisOptions = inputFields
