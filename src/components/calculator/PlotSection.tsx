@@ -15,6 +15,8 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import 'katex/dist/katex.min.css';
+import { InlineMath } from 'react-katex';
 
 const formatNumber = (value: number | string) => {
   if (typeof value === 'number') {
@@ -90,6 +92,22 @@ export function PlotSection({
         }
       </ul>
     );
+  };
+
+  const renderLabel = (label: string) => {
+    const parts = label.split(/(\(.*?\))/);
+    return parts.map((part, index) => {
+      if (part.startsWith('(') && part.endsWith(')')) {
+        return (
+          <span key={index}>
+            {'('}
+            <InlineMath math={part.slice(1, -1)} />
+            {')'}
+          </span>
+        );
+      }
+      return part;
+    });
   };
 
   const [localMin, setLocalMin] = useState(Number(xAxisMin.toFixed(4)));
@@ -171,12 +189,12 @@ export function PlotSection({
           <div>
             <Label htmlFor="x-axis-var">X-Axis Variable</Label>
             <Select value={xAxisVar} onValueChange={onXAxisVarChange}>
-              <SelectTrigger>
+              <SelectTrigger className="w-[280px]">
                 <SelectValue placeholder="Select X-axis variable" />
               </SelectTrigger>
               <SelectContent>
                 {xAxisOptions.map(option => (
-                  <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
+                  <SelectItem key={option.value} value={option.value}>{renderLabel(option.label)}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
