@@ -20,9 +20,13 @@
 
 ## 紹介
 
-研究者に愛用されていたサンプルサイズ計算ウェブサイト `powersandsamplesize.com` がサービスを停止したため、その機能を再現した[Open Power Samplesize](https://zarathucorp.github.io/open-powersamplsize/)を作成しました。
+研究者の皆様にご愛用いただいていたサンプルサイズ計算ウェブサイト`powersandsamplesize.com`のサービス終了に伴い、その機能を再現した新しいツール [Open Power Samplesize](https://zarathucorp.github.io/open-powersamplsize/)を公開しました。
 
-`Open Power Samplesize`では、従来のウェブサイトと同様に検出力とサンプルサイズを計算でき、**非劣性検定をサポートしていることが最大の特徴です**。ソースコードはオープンソースとして公開されており、[Zarathu GitHub](https://github.com/zarathucorp)で確認できます。Rユーザーの方は、[Rashnu](https://zarathucorp.github.io/rashnu/)パッケージで同じ機能をすべて提供していますので、ご参照ください。Rashnuは、生存時間分析のログランク検定に基づくサンプルサイズ計算（非劣性検定を含む）も提供しています。ありがとうございます。
+`Open Power Samplesize`では、従来のウェブサイトと同様に検出力（Power）とサンプルサイズ（Sample size）の計算が可能です。**特に、非劣性試験（non-inferiority testing）のサポートが大きな特徴です**。
+
+ソースコードはオープンソースとして、 [Zarathu GitHub](https://github.com/zarathucorp)で公開されています。
+
+また、Rユーザーの皆様は、 [Rashnu](https://zarathucorp.github.io/rashnu/) パッケージを通じて同じ機能をご利用いただけます。`Rashnu`パッケージでは、生存時間分析におけるログランク検定（log-rank test）に基づいたサンプルサイズ計算（非劣性試験を含む）もサポートしていますので、ぜひご活用ください。
 
 ## はじめに
 
