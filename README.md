@@ -18,17 +18,17 @@
 
 This tool supports a wide range of scenarios, including tests for means, proportions, time-to-event data, and more. This project is built with [Next.js](https://nextjs.org).
 
-[한글 README](./README.ko.md)
+[한글 README](./README.ko.md) | [日本語 README](./README.ja.md)
 
 ## Introduction
 
-The website `powersandsamplesize.com`, frequently used by researchers for statistical power and sample size calculations, has recently become unavailable due to errors. Inspired by its commitment to providing a variety of functions and validated formulas freely to the public, we are proud to introduce Zarathu's open-source tool: `Open Power Samplesize`.
+Announcing the launch of  [Open Power Samplesize](https://zarathucorp.github.io/open-powersamplsize/), a new tool designed to replace the now-discontinued `powersandsamplesize.com`.
 
-The goal of `Open Power Samplesize` is to provide **fast and accurate power and sample size calculations** essential for various research designs. Our calculation tools can be utilized across numerous scientific fields, including clinical trials, epidemiology, and psychology.
+For the many researchers who relied on `powersandsamplesize.com`, `Open Power Samplesize` restores the essential power and sample size calculation features. A key enhancement is the newly added support for **non-inferiority testing**.
 
-For full transparency, all source code and formulas are publicly available and can be reviewed on the Zarathu GitHub. Additionally, for researchers who wish to perform their analyses using R, all the same functionalities are available in the R package `Rashnu`.
+The source code is fully open-source and available on the [Zarathu GitHub](https://github.com/zarathucorp).
 
-Should you encounter any errors while using the site, please report them on our GitHub issues page.
+For R users, all functions of `Open Power Samplesize` are available in the  [Rashnu](https://zarathucorp.github.io/rashnu/)  package. The `Rashnu` package also offers advanced features, including sample size calculation for survival analysis using the log-rank test (with support for non-inferiority designs).
 
 ## Getting Started
 

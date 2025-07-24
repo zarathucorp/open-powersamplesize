@@ -20,11 +20,10 @@
 
 ## 소개
 
-통계적 검정력 및 표본 크기 계산을 위해 연구자들이 자주 사용던 `powersandsamplesize.com`이 최근 오류로 인해 사용이 불가능해졌습니다. 다양한 기능과 검증된 수식이 자유롭게 공개되어 있음에 영감을 받아 차라투의 오픈소스 Tool `Open Power Samplesize`를 선보입니다.
+ 연구자들에게 사랑 받던 샘플 수 계산웹 `powersandsamplesize.com` 이 서비스 중단되어, 해당 웹의 기능을 재현한  [Open Power Samplesize](https://zarathucorp.github.io/open-powersamplsize/)를 만들었습니다.
 
-`Open Power Samplesize`의 목표는 다양한 연구 설계에 필수적인 **Power 와 Sample size를 빠르고 정확하게 제공**하는 것입니다. 저희의 계산 도구를 통해 임상 시험, 역학, 심리학 등 과학 분야 전반에서 활용할 수 있습니다. 모든 소스코드와 수식은 투명성을 위해 공개되어 있고 Zarathu GitHub를 통해 확인할 수 있습니다. 또한 R을 이용해 분석을 원하시는 연구자분들은 R package `Rashnu`에서 동일한 모든 기능을 제공하니 참고하시기 바랍니다.
-
-사이트 이용에 오류가 있을 시 GitHub issues 페이지 이용 바랍니다.
+`Open Power Samplesize` 에서 기존웹과 동일하게 Power 와 Sample size를 계산할 수 있으며, 
+**비열등성 검정을 지원하는 것이 가장 큰 특징입니다**.  소스코드는 오픈소스로 공개하여  [Zarathu GitHub](https://github.com/zarathucorp)에서 확인할 수 있습니다. R 이용자분들은  [Rashnu](https://zarathucorp.github.io/rashnu/)  패키지에서 동일한 모든 기능을 제공하니 참고 부탁드리고, Rashnu 는 생존분석 log-rank test 기반의 샘플 수 계산(비열등성 검정 포함) 도 제공합니다. 감사합니다.
 
 ## 시작하기
 
