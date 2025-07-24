@@ -2,9 +2,29 @@
 
 [![Deploy to GitHub Pages](https://github.com/zarathucorp/open-powersamplesize/actions/workflows/deploy.yml/badge.svg)](https://github.com/zarathucorp/open-powersamplesize/actions/workflows/deploy.yml)
 
+<p align="left">
+  <img src="https://img.shields.io/badge/TypeScript-007ACC?style=flat-square&logo=typescript&logoColor=white" alt="TypeScript"/>
+  <img src="https://img.shields.io/badge/React-20232A?style=flat-square&logo=react&logoColor=61DAFB" alt="React"/>
+  <img src="https://img.shields.io/badge/Next.js-000000?style=flat-square&logo=nextdotjs&logoColor=white" alt="Next.js"/>
+  <img src="https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=flat-square&logo=tailwind-css&logoColor=white" alt="Tailwind CSS"/>
+  <img src="https://img.shields.io/badge/shadcn%2Fui-000000?style=flat-square" alt="shadcn/ui"/>
+  <img src="https://img.shields.io/badge/Recharts-B42424?style=flat-square" alt="Recharts"/>
+  <img src="https://img.shields.io/badge/jStat-3B82F6?style=flat-square" alt="jStat"/>
+  <img src="https://img.shields.io/badge/ESLint-4B3263?style=flat-square&logo=eslint&logoColor=white" alt="ESLint"/>
+  <img src="https://img.shields.io/badge/Docker-2496ED?style=flat-square&logo=docker&logoColor=white" alt="Docker"/>
+</p>
+
 *Open Power Samplesize*는 연구자와 학생들이 다양한 통계 검정에 대한 검정력 및 표본 크기 계산을 수행할 수 있도록 설계된 무료 오픈소스 웹 애플리케이션입니다. 저희 목표는 연구 설계를 위한 직관적이고 접근하기 쉬운 도구를 제공하는 것입니다.
 
 이 도구는 평균, 비율, 생존 시간 데이터 등에 대한 검정을 포함한 광범위한 시나리오를 지원합니다. 이 프로젝트는 [Next.js](https://nextjs.org)로 구축되었습니다.
+
+## 소개
+
+통계적 검정력 및 표본 크기 계산을 위해 연구자들이 자주 사용던 `powersandsamplesize.com`이 최근 오류로 인해 사용이 불가능해졌습니다. 다양한 기능과 검증된 수식이 자유롭게 공개되어 있음에 영감을 받아 차라투의 오픈소스 Tool `Open Power Samplesize`를 선보입니다.
+
+`Open Power Samplesize`의 목표는 다양한 연구 설계에 필수적인 **Power 와 Sample size를 빠르고 정확하게 제공**하는 것입니다. 저희의 계산 도구를 통해 임상 시험, 역학, 심리학 등 과학 분야 전반에서 활용할 수 있습니다. 모든 소스코드와 수식은 투명성을 위해 공개되어 있고 Zarathu GitHub를 통해 확인할 수 있습니다. 또한 R을 이용해 분석을 원하시는 연구자분들은 R package `Rashnu`에서 동일한 모든 기능을 제공하니 참고하시기 바랍니다.
+
+사이트 이용에 오류가 있을 시 GitHub issues 페이지 이용 바랍니다.
 
 ## 시작하기
 
@@ -20,6 +40,20 @@
     npm run dev
     ```
 4.  브라우저에서 [http://localhost:3000](http://localhost:3000)을 열어 결과를 확인합니다.
+
+### Docker로 실행하기
+
+또는 Docker를 사용하여 애플리케이션을 실행할 수 있습니다.
+
+1.  Docker 이미지를 빌드합니다.
+    ```bash
+    docker build -t open-powersamplesize .
+    ```
+2.  Docker 컨테이너를 실행합니다.
+    ```bash
+    docker run -p 3000:3000 open-powersamplesize
+    ```
+3.  브라우저에서 [http://localhost:3000](http://localhost:3000)을 열어 결과를 확인합니다.
 
 ## 배포
 

@@ -54,7 +54,7 @@ export function Navbar() {
               <NavigationMenuLink
                 asChild
               >
-                <Link href="https://github.com/zarathucorp" target="_blank" rel="noopener noreferrer" className="flex items-center">
+                <Link href="https://github.com/zarathucorp/open-powersamplesize" target="_blank" rel="noopener noreferrer" className="flex items-center">
                   <Github className="w-6 h-6" />
                   {/* GitHub */}
                 </Link>
