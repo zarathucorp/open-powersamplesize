@@ -104,6 +104,7 @@ export function CalculatorInputArea({
             >
               <Input
                 id={field.name}
+                data-testid={field.name}
                 type={field.type}
                 value={params[field.name] ?? ''}
                 onChange={handleChange}
