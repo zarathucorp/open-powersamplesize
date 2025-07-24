@@ -215,11 +215,11 @@ export default function Compare2ProportionsNonInferioritySuperiority() {
     const inputFields = [
         { name: 'power', label: 'Power (1-β)', type: 'text' as const, solve: 'power' as const },
         { name: 'nB', label: 'Sample Size (n_B)', type: 'number' as const, solve: 'sampleSize' as const },
-        { name: 'alpha', label: 'Alpha (α)', type: 'number' as const },
-        { name: 'pA', label: 'Proportion, Group A (p_A)', type: 'number' as const },
-        { name: 'pB', label: 'Proportion, Group B (p_B)', type: 'number' as const },
-        { name: 'kappa', label: 'Ratio (κ = n_A/n_B)', type: 'number' as const },
-        { name: 'delta', label: 'Margin (δ)', type: 'number' as const },
+        { name: 'alpha', label: 'Type I error rate (α)', type: 'number' as const },
+        { name: 'pA', label: 'Group A Proportion (p_A)', type: 'number' as const },
+        { name: 'pB', label: 'Group B Proportion (p_B)', type: 'number' as const },
+        { name: 'delta', label: 'Non-inferiority or Superiority Margin (δ)', type: 'number' as const },
+        { name: 'kappa', label: 'Sampling Ratio (κ = n_A/n_B)', type: 'number' as const },
     ];
 
     const xAxisOptions = inputFields

@@ -206,13 +206,11 @@ export default function SccsAlt2Calculator() {
 
     // 계산기의 입력 필드를 정의하세요.
     const inputFields = [
-        // 필수 입력 필드
         { name: 'power', label: 'Power (1-β)', type: 'text' as const, solve: 'power' as const },
         { name: 'sampleSize', label: 'Sample Size (n)', type: 'number' as const, solve: 'sampleSize' as const },
-        { name: 'alpha', label: 'Alpha (α)', type: 'number' as const },
-        // 여기에 다른 입력 필드를 추가하세요.
+        { name: 'alpha', label: 'Type I error rate (α)', type: 'number' as const },
         { name: 'rho', label: 'Relative Incidence (ρ)', type: 'number' as const },
-        { name: 'r', label: 'Proportion of time exposed (r)', type: 'number' as const },
+        { name: 'r', label: 'ratio of risk to observation period lengths (r)', type: 'number' as const },
     ];
 
     const xAxisOptions = inputFields

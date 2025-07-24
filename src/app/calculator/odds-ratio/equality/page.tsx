@@ -197,11 +197,11 @@ export default function OddsRatioEquality() {
 
     const inputFields = [
         { name: 'power', label: 'Power (1-β)', type: 'text' as const, solve: 'power' as const },
-        { name: 'sampleSize', label: 'Sample Size (nB)', type: 'number' as const, solve: 'sampleSize' as const },
-        { name: 'alpha', label: 'Alpha (α)', type: 'number' as const },
-        { name: 'pA', label: 'Prob. of Outcome in Group A (pA)', type: 'number' as const },
-        { name: 'pB', label: 'Prob. of Outcome in Group B (pB)', type: 'number' as const },
-        { name: 'kappa', label: 'Matching Ratio (κ = nA/nB)', type: 'number' as const },
+        { name: 'sampleSize', label: 'Sample Size (n_B)', type: 'number' as const, solve: 'sampleSize' as const },
+        { name: 'alpha', label: 'Type I error rate (α)', type: 'number' as const },
+        { name: 'pA', label: 'Group A Proportion (p_A)', type: 'number' as const },
+        { name: 'pB', label: 'Group B Proportion (p_B)', type: 'number' as const },
+        { name: 'kappa', label: 'Sampling Ratio (κ = n_A/n_B)', type: 'number' as const },
     ];
 
     const xAxisOptions = inputFields

@@ -207,11 +207,11 @@ export default function CoxPH1SidedPage() {
     const inputFields = [
         { name: 'power', label: 'Power (1-β)', type: 'text' as const, solve: 'power' as const },
         { name: 'sampleSize', label: 'Sample Size (n)', type: 'number' as const, solve: 'sampleSize' as const },
-        { name: 'alpha', label: 'Alpha (α)', type: 'number' as const },
+        { name: 'alpha', label: 'Type I error rate (α)', type: 'number' as const },
         { name: 'hr', label: 'Hazard Ratio (θ)', type: 'number' as const },
-        { name: 'hr0', label: 'Null Hazard Ratio (θ₀)', type: 'number' as const },
-        { name: 'pE', label: 'Overall Event Probability (p_E)', type: 'number' as const },
-        { name: 'pA', label: 'Group A Allocation', type: 'number' as const },
+        { name: 'hr0', label: 'Null-Hypothesis Hazard Ratio (θ₀)', type: 'number' as const },
+        { name: 'pE', label: 'Overall Probability of Event (p_E)', type: 'number' as const },
+        { name: 'pA', label: 'Proportion of Sample in Group A (p_A)', type: 'number' as const },
     ];
 
     const xAxisOptions = inputFields

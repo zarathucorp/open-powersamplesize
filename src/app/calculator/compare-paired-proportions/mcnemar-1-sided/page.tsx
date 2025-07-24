@@ -209,7 +209,7 @@ export default function McNemar1SidedPage() {
     const inputFields = [
         { name: 'power', label: 'Power (1-β)', type: 'text' as const, solve: 'power' as const },
         { name: 'sampleSize', label: 'Sample Size (n)', type: 'number' as const, solve: 'sampleSize' as const },
-        { name: 'alpha', label: 'Alpha (α)', type: 'number' as const },
+        { name: 'alpha', label: 'Type I error rate (α)', type: 'number' as const },
         { name: 'p01', label: 'no event-event (p₀₁)', type: 'number' as const },
         { name: 'p10', label: 'event-no event (p₁₀)', type: 'number' as const },
     ];

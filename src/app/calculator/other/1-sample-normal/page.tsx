@@ -199,9 +199,9 @@ export default function OneSampleNormalPage() {
         // 필수 입력 필드
         { name: 'power', label: 'Power (1-β)', type: 'text' as const, solve: 'power' as const },
         { name: 'sampleSize', label: 'Sample Size (n)', type: 'number' as const, solve: 'sampleSize' as const },
-        { name: 'alpha', label: 'Alpha (α)', type: 'number' as const },
-        { name: 'mean', label: 'Mean (μ)', type: 'number' as const },
-        { name: 'mean0', label: 'Reference Mean (μ0)', type: 'number' as const },
+        { name: 'alpha', label: 'Type I error rate (α)', type: 'number' as const },
+        { name: 'mean', label: 'True mean (μ)', type: 'number' as const },
+        { name: 'mean0', label: 'Null Hypothesis mean (μ_0)', type: 'number' as const },
         { name: 'stdDev', label: 'Standard Deviation (σ)', type: 'number' as const },
     ];
 

@@ -206,15 +206,13 @@ export default function CoxPH2SidedEqualityPage() {
 
     // 계산기의 입력 필드를 정의합니다.
     const inputFields = [
-        // 필수 입력 필드
         { name: 'power', label: 'Power (1-β)', type: 'text' as const, solve: 'power' as const },
         { name: 'sampleSize', label: 'Sample Size (n)', type: 'number' as const, solve: 'sampleSize' as const },
-        { name: 'alpha', label: 'Alpha (α)', type: 'number' as const },
-        // 여기에 다른 입력 필드를 추가하세요.
+        { name: 'alpha', label: 'Type I error rate (α)', type: 'number' as const },
         { name: 'hr', label: 'Hazard Ratio (θ)', type: 'number' as const },
-        { name: 'hr0', label: 'Null Hazard Ratio (θ₀)', type: 'number' as const },
-        { name: 'pE', label: 'Overall Event Rate (pE)', type: 'number' as const },
-        { name: 'pA', label: 'Proportion in Group A (pA)', type: 'number' as const },
+        { name: 'hr0', label: 'Null-Hypothesis Hazard Ratio (θ₀)', type: 'number' as const },
+        { name: 'pE', label: 'Overall Probability of Event (p_E)', type: 'number' as const },
+        { name: 'pA', label: 'Proportion of Sample in Group A (p_A)', type: 'number' as const },
     ];
 
     const xAxisOptions = inputFields

@@ -4,6 +4,8 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import 'katex/dist/katex.min.css';
+import { InlineMath } from 'react-katex';
 
 type InputField = {
   name: string;
@@ -55,6 +57,22 @@ export function CalculatorInputArea({
     }
   };
 
+  const renderLabel = (label: string) => {
+    const parts = label.split(/(\(.*?\))/);
+    return parts.map((part, index) => {
+      if (part.startsWith('(') && part.endsWith(')')) {
+        return (
+          <span key={index}>
+            {'('}
+            <InlineMath math={part.slice(1, -1)} />
+            {')'}
+          </span>
+        );
+      }
+      return part;
+    });
+  };
+
   return (
     <div className="space-y-4">
       <div>
@@ -92,7 +110,7 @@ export function CalculatorInputArea({
         const isAlphaField = field.name === 'alpha'
         return (
           <div key={field.name}>
-            <Label htmlFor={field.name}>{field.label}</Label>
+            <Label htmlFor={field.name}>{renderLabel(field.label)}</Label>
             <div
               onClick={() => {
                 if (isDisabled) {

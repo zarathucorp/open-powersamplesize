@@ -211,14 +211,14 @@ export default function OneWayAnovaPairwise1Sided() {
 
     const inputFields = [
         { name: 'power', label: 'Power (1-β)', type: 'text' as const, solve: 'power' as const },
-        { name: 'sampleSize', label: 'Sample Size (nA)', type: 'number' as const, solve: 'sampleSize' as const },
-        { name: 'alpha', label: 'Alpha (α)', type: 'number' as const },
-        { name: 'meanA', label: 'Mean of Group A (μA)', type: 'number' as const },
-        { name: 'meanB', label: 'Mean of Group B (μB)', type: 'number' as const },
-        { name: 'stdDevA', label: 'Std Dev of Group A (σA)', type: 'number' as const },
-        { name: 'stdDevB', label: 'Std Dev of Group B (σB)', type: 'number' as const },
-        { name: 'kappa', label: 'Matching Ratio (κ=nA/nB)', type: 'number' as const },
-        { name: 'tau', label: 'Number of Comparisons (τ)', type: 'number' as const },
+        { name: 'sampleSize', label: 'Sample Size (n_A)', type: 'number' as const, solve: 'sampleSize' as const },
+        { name: 'alpha', label: 'Type I error rate (α)', type: 'number' as const },
+        { name: 'meanA', label: 'Group A mean (μ_A)', type: 'number' as const },
+        { name: 'meanB', label: 'Group B mean (μ_B)', type: 'number' as const },
+        { name: 'stdDevA', label: 'Group A Standard Deviation (σ_A)', type: 'number' as const },
+        { name: 'stdDevB', label: 'Group B Standard Deviation (σ_B)', type: 'number' as const },
+        { name: 'kappa', label: 'Matching Ratio (κ=n_A/n_B)', type: 'number' as const },
+        { name: 'tau', label: 'Number of Pairwise Comparisons (τ)', type: 'number' as const },
     ];
 
     const xAxisOptions = inputFields
