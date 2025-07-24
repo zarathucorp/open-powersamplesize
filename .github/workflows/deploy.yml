@@ -2,9 +2,12 @@
 name: Deploy static content to Pages
 
 on:
-  # 기본 브랜치에 대한 푸시에만 실행
-  push:
-    branches: ["main"]
+  workflow_run:
+    workflows: ["Playwright Tests"]
+    types:
+      - completed
+    branches:
+      - main
 
   # Actions 탭에서 수동으로 이 워크플로우를 실행할 수 있도록 함
   workflow_dispatch:
@@ -23,6 +26,7 @@ concurrency:
 jobs:
   # 정적 콘텐츠를 빌드하는 단일 작업
   deploy:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
